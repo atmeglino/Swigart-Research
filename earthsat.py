@@ -52,6 +52,7 @@ if __name__ == '__main__':
     pl.xlabel('x [Earth radii]')
     pl.xlabel('t [Earth radii]')
 
+
     # get ready to integrate, define num of timesteps, substeps .....
     P = 2*np.pi*r/v # dynamical time, or use orbital period...
     trun, nt = 27*day, 50
@@ -63,7 +64,10 @@ if __name__ == '__main__':
         steps(b,dt,ntsub)  # integrate!
         tnow = dt*(i+1)
         # plot pos in x-y relative to earth
-        pl.plot((b[1:].x-b[1].x)/earth.r,(b[1:].y-b[1].y)/earth.r,'.k')
+        # pl.plot((b[1:].x-b[1].x)/earth.r,(b[1:].y-b[1].y)/earth.r,'.k')
+        colors = ['red', 'blue', 'gray', 'green']
+        pl.scatter((b[1:].x-b[1].x)/earth.r, (b[1:].y-b[1].y)/earth.r, 
+           c=colors[1:], s=20)
         print(i,tnow/year,'yr;',pairsep(b[1],b[-1])/earth.r)
 
     # dump out a plot of results
@@ -73,4 +77,3 @@ if __name__ == '__main__':
     import os
     if os.path.isfile('/uufs/astro.utah.edu/common/home/u0095165/www/tmp.jpg'):
         os.system('convert '+out+' ~/www/tmp.jpg')
-
