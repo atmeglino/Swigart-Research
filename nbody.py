@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.spatial.transform import Rotation as Ro
 
 from constants import *
 
@@ -6,7 +7,7 @@ bodyt = np.dtype([('m',float),('r',float),
                   ('x',float),('y',float),('z',float),
                   ('vx',float),('vy',float),('vz',float),
                   ('ax',float),('ay',float),('az',float),
-                  ('Q',float),('eta',float),('L',float), ('q', float)])
+                  ('Q',float),('eta',float),('L',float),('q',float)])
 
 def Bfield(r,mmo):
     rr = np.sqrt(np.dot(r,r))
