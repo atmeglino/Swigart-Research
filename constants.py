@@ -1,4 +1,6 @@
 
+from numpy import pi
+
 # cgs...
 GNewt = 6.67403e-8
 
@@ -7,6 +9,14 @@ hour = 3600.0
 day = 24*hour
 yr = 365.25*day 
 year = yr
+
+degree = 3.1415926535897932385/180
+
+PspinEarth = 23.9344695944*hour # from JPL Horizons
+PorbitEarth = 365.25636*day # orbital period 
+tiltEarth = 23.4392911*degree # radians
+TjunesolsticeEarth2025JD = 2460846.61251; # where did i get this?
+TmarchequinoxEarth2026JD = 2460754.8756944 # print(2460754.8756944 + 3*hour/day)
 
 AU =  1.495978707e13
 pc = 3.8057e18

@@ -70,7 +70,7 @@ def acc(b,t,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitating
         dx,dy,dz = (bm.x-b.x[i]),(bm.y-b.y[i]),(bm.z-b.z[i])
         dr3 = (dx**2 + dy**2 + dz**2 + soft**2)**1.5;
         b.ax[i],b.ay[i],b.az[i] = np.sum(GNewt*bm.m*dx/dr3),np.sum(GNewt*bm.m*dy/dr3),np.sum(GNewt*bm.m*dz/dr3)
-
+        
 def step(b,t,dt):
     b.x,b.y,b.z = b.x+0.5*dt*b.vx,b.y+0.5*dt*b.vy,b.z+0.5*dt*b.vz
     acc(b,t+0.5*dt)
@@ -112,7 +112,6 @@ def steps(b,t,trun,ns,order=6):
 
 def dist(b): 
     return np.sqrt(b.x**2+b.y**2+b.z**2)
-
 
 def reldist(b,bref):
     return np.sqrt((b.x-bref.x)**2+(b.y-bref.y)**2+(b.z-bref.z)**2)
@@ -171,17 +170,54 @@ def zenithframe(planet,star): # frame with z out of orbital plane, x is planet-s
     ey = unitvec(np.cross(ez,ex))
     return np.array([ex,ey,ez])
 
-def bodyframe_equinox(planet,star,tnow,tequinox,Porbital,obliq): # units cgs, radians
-    t, om = (tnow-tequinox),-2*np.pi/Porbital
-    ex,ey,ez = zenithframe(planet,star) # frame where x points to sun z is up from orbit plane
-    rorb = Ro.from_quat([0,0,np.sin(om*t/2),np.cos(om*t/2)]) # rotate to equinox in orb plane
-    robl = Ro.from_quat([np.sin(obliq/2),0,0,np.cos(obliq/2)]) # set obliquity, x points to sun
-    return (robl * rorb).apply(np.array([ex,ey,ez]))
+def bodyframe_equinox(obliq,orbinfo=([],0,1,0.0)): # this is over the top.
+    # returns simple tilted ref frame z-axis aligned with spin at vernal equinox, i.e., sun on +x axis.
+    # unless! orbinfo = (b,staridx,planetidx,dt), then calc ex,ey,ez from orbit info....should work for Mars.
+    # b = list of sol sys bodies dtype = bodyt....
+    # staridx = index of sun (0 usually!), i.e., sun = b[starindex]
+    # planetidx = index of planet...
+    # trun = time between epoch of b[] and vernal equinox. may be negative. becareful. 
+    if len(orbinfo):
+        b = orbinfo[0].copy() # expect a 
+        staridx = orbinfo[1]
+        planetidx = orbinfo[2]
+        trun = orbinfo[3]
+        if trun != 0:
+            steps(b,0,trun,400)  # integrate
+        star,planet = b[staridx],b[planetidx]
+        ez = unitvec(np.cross(posrel(planet,star),velrel(planet,star)))
+        ex = unitvec(posrel(star,planet))
+        ey = unitvec(np.cross(ez,ex))
+    else:
+        ex,ey,ez = vec3d(1,0,0),vec3d(0,1,0),vec3d(0,0,1)
+    soex = np.sin(-obliq/2)*ex # vec to rotate around, ex, times sin(theta/2)...
+    robl = Ro.from_quat([soex[0],soex[1],soex[2],np.cos(-obliq/2)]) # set obliquity, x points to sun
+    return robl.apply(np.array([ex,ey,ez]))
 
-def bodyframe(tnow,tref,bodyframe_ref,Psin):
-    t,om = tnow-tspin,2*np.pi/Pspin
-    rspin = Ro.from_quat([0,0,np.sin(om*t/2),np.cos(om*t/2)]) # rotate to now
-    return rspin.apply(bodyframe_equinox)
+def bodyframe(tnow,tref,bodyframe_ref,Pspin): # spins ref frame about z axis....
+    t,om = tnow-tref,2*np.pi/Pspin
+    rotv = unitvec(bodyframe_ref[2])*np.sin(om*t/2)
+    rspin = Ro.from_quat([rotv[0],rotv[1],rotv[2],np.cos(om*t/2)]) # rotate to now
+    return np.array(rspin.apply(bodyframe_ref))
+
+def bodyframe_earth(b,sunindex,earthindex,epoch,tequinox,obliq,pspin):
+    bf = bodyframe_equinox(obliq,orbinfo=(b,sunindex,earthindex,tequinox-epoch))
+    dt = np.ceil(tequinox/day)-tequinox/day # no longer aligned with high noon in Greenwich
+    #dt += 12*60/day
+    bf = bodyframe(-dt*day,0,bf,pspin)
+    return bf
+
+def localframelalo(latdeg,londeg,t,tref,bfref,pspin): # latitude, longitude, in degrees
+    ebx,eby,ebz = bodyframe(t,tref,bfref,pspin)
+    theta,phi = (90-latdeg)*degree,londeg*degree
+    ct,st,cp,sp = np.cos(theta),np.sin(theta),np.cos(phi),np.sin(phi)
+    e_up = st*cp*ebx + st*sp*eby + ct*ebz # e_r in spherical polar
+    e_north = -ct*cp*ebx - ct*sp*eby +st*ebz # -e_theta
+    e_east = -sp*ebx + cp*eby            # e_phi
+    return np.array([e_up, e_north, e_east])    
+    
+
+
 
 def orbels(sat,ctrlmass): # a,e,i but i is rel to bg coordinates not anything sensible
     r,v = posvelrel(sat,ctrlmass)
