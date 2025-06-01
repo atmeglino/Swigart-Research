@@ -37,6 +37,9 @@ if __name__ == '__main__':
     b[0] = setbody((sun.m,sun.r,sun.x,sun.y,sun.z,sun.vx,sun.vy,sun.vz))
     b[1] = setbody((earth.m,earth.r,earth.x,earth.y,earth.z,earth.vx,earth.vy,earth.vz))
     b[2] = setbody((moon.m,moon.r,moon.x,moon.y,moon.z,moon.vx,moon.vy,moon.vz))
+    
+    accGrav(b[0])
+    exit()
 
     tnowjd = sun.jd
     teqxjd = TmarchequinoxEarth2026JD

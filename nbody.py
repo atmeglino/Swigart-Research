@@ -21,7 +21,7 @@ def beta_est(rp,rhop,Q):
 def beta_estx(rp,mp,Q):
     return rp**2*Lsun/4*Q/(GNewt*clight*mp*Msun)
 
-def acc(b,t,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitating mass.
+def accGrav(b,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitating mass.
     global Lsun,GNewt,uswind
     b.ax = b.ay = b.az = 0.0
     bm = b[b.m>mthresh]
@@ -31,48 +31,47 @@ def acc(b,t,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitating
         bdz = np.repeat(b.z[:,np.newaxis],len(bm),1)-np.repeat(bm.z[np.newaxis,:],len(b),0)
         r3 = (bdx**2+bdy**2+bdz**2+soft**2)**(3/2)
         Gm = GNewt*np.repeat(bm.m[np.newaxis,:],len(b),0)
-        b.ax = np.sum(-Gm*bdx/r3,axis=1)
-        b.ay = np.sum(-Gm*bdy/r3,axis=1)
-        b.az = np.sum(-Gm*bdz/r3,axis=1)
-        msk = (b.q>0)
-        if np.sum(msk)>0:# magnetic field
-            xe,ye,ze = b[1].x,b[1].y,b[1].z
-            vxe,vye,vze = b[1].vx,b[1].vy,b[1].vz
-            mmuEarth = 1e10
-            mmo  = mmuEarth = np.array([np.sin(23/180.*np.pi),0,np.cos(23/180.*np.pi)])
-            bt = b[msk]
-            rx,ry,rz,vx,vy,vz = bt.x-xe,bt.y-ye,bt.z-ze,bt.vx-vxe,bt.vy-vye,bt.vz-vze
-            mu0 = 4*np.pi*1e-7
-            meter,kg = 100.0,1000.
-            B =  Bfield(np.array([rx,ry,rz])/meter,mmo,mu0)
-            a = bt.q * np.cross(np.array([vx,vy,vz])/meter,B)/(bt.m/kg) # m/s^2
-            a *= meter
-            b.ax[msk] += a[0]
-            b.ay[msk] += a[1]
-            b.az[msk] += a[2]
-        msk = (b.Q>0)
-        if np.sum(msk)>0: #radiation pressure
-            xs,ys,zs,vxs,vys,vzs = b[0].x,b[0].y,b[0].z,b[0].vx,b[0].vy,b[0].vz
-            bt = b[msk]
-            rx,ry,rz,vx,vy,vz = bt.x-xs,bt.y-ys,bt.z-zs,bt.vx-vxs,bt.vy-vys,bt.vz-vzs
-            r2 = rx**2+ry**2+rz**2
-            rr = np.sqrt(r2)
-            Ap = np.pi*bt.r**2  # this is key! r thus defines cross section not physical radius....
-            S = Lsun/(4*np.pi*r2)
-            etadivQ = bt.eta/bt.Q
-            radacc = Ap*S*bt.Q/clight/bt.m*(1+etadivQ*uswind/clight-(1+etadivQ)*(vx*rx+vy*ry+vz*rz)/rr/clight)
-            pracc = -Ap*S*bt.Q/clight**2/bt.m*(1+etadivQ)
-            b.ax[msk] += radacc*rx/rr + pracc*vx
-            b.ay[msk] += radacc*ry/rr + pracc*vy
-            b.az[msk] += radacc*rz/rr + pracc*vz
-        return 
-    for i in range(len(b)):
-        dx,dy,dz = (bm.x-b.x[i]),(bm.y-b.y[i]),(bm.z-b.z[i])
-        dr3 = (dx**2 + dy**2 + dz**2 + soft**2)**1.5;
-       # b.ax[i],b.ay[i],b.az[i] = np.sum(GNewt*bm.m*dx/dr3),np.sum(GNewt*bm.m*dy/dr3),np.sum(GNewt*bm.m*dz/dr3)
-        b.ax[i] = np.sum(GNewt*bm.m*dx/dr3)
-        b.ay[i] = np.sum(GNewt*bm.m*dy/dr3)
-        b.az[i] = np.sum(GNewt*bm.m*dz/dr3)
+        b.axg = np.sum(-Gm*bdx/r3,axis=1)
+        b.ayg = np.sum(-Gm*bdy/r3,axis=1)
+        b.azg = np.sum(-Gm*bdz/r3,axis=1)
+    return b.axg, b.ayg, b.azg
+
+def accMag(b):
+    msk = (b.q>0)
+    if np.sum(msk)>0:# magnetic field
+        xe,ye,ze = b[1].x,b[1].y,b[1].z
+        vxe,vye,vze = b[1].vx,b[1].vy,b[1].vz
+        mmuEarth = 1e10
+        mmo  = mmuEarth = np.array([np.sin(23/180.*np.pi),0,np.cos(23/180.*np.pi)])
+        bt = b[msk]
+        rx,ry,rz,vx,vy,vz = bt.x-xe,bt.y-ye,bt.z-ze,bt.vx-vxe,bt.vy-vye,bt.vz-vze
+        mu0 = 4*np.pi*1e-7
+        meter,kg = 100.0,1000.
+        B =  Bfield(np.array([rx,ry,rz])/meter,mmo,mu0)
+        a = bt.q * np.cross(np.array([vx,vy,vz])/meter,B)/(bt.m/kg) # m/s^2
+        a *= meter
+        b.axm[msk] += a[0]
+        b.aym[msk] += a[1]
+        b.azm[msk] += a[2]
+    return b.axm, b.aym, b.azm
+        
+def accRad(b):
+    msk = (b.Q>0)
+    if np.sum(msk)>0: #radiation pressure
+        xs,ys,zs,vxs,vys,vzs = b[0].x,b[0].y,b[0].z,b[0].vx,b[0].vy,b[0].vz
+        bt = b[msk]
+        rx,ry,rz,vx,vy,vz = bt.x-xs,bt.y-ys,bt.z-zs,bt.vx-vxs,bt.vy-vys,bt.vz-vzs
+        r2 = rx**2+ry**2+rz**2
+        rr = np.sqrt(r2)
+        Ap = np.pi*bt.r**2  # this is key! r thus defines cross section not physical radius....
+        S = Lsun/(4*np.pi*r2)
+        etadivQ = bt.eta/bt.Q
+        radacc = Ap*S*bt.Q/clight/bt.m*(1+etadivQ*uswind/clight-(1+etadivQ)*(vx*rx+vy*ry+vz*rz)/rr/clight)
+        pracc = -Ap*S*bt.Q/clight**2/bt.m*(1+etadivQ)
+        b.axr[msk] += radacc*rx/rr + pracc*vx
+        b.ayr[msk] += radacc*ry/rr + pracc*vy
+        b.azr[msk] += radacc*rz/rr + pracc*vz
+    return b.axr, b.ayr, b.azr
         
 def ode(t, b):
     # for simplicity, start by assuming y has only one object
