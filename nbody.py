@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.spatial.transform import Rotation as Ro
+import scipy as sp
 
 from constants import *
 
@@ -24,7 +25,7 @@ def acc(b,t,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitating
     global Lsun,GNewt,uswind
     b.ax = b.ay = b.az = 0.0
     bm = b[b.m>mthresh]
-    if True:
+    if True: # gravational force
         bdx = np.repeat(b.x[:,np.newaxis],len(bm),1)-np.repeat(bm.x[np.newaxis,:],len(b),0)
         bdy = np.repeat(b.y[:,np.newaxis],len(bm),1)-np.repeat(bm.y[np.newaxis,:],len(b),0)
         bdz = np.repeat(b.z[:,np.newaxis],len(bm),1)-np.repeat(bm.z[np.newaxis,:],len(b),0)
@@ -34,8 +35,7 @@ def acc(b,t,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitating
         b.ay = np.sum(-Gm*bdy/r3,axis=1)
         b.az = np.sum(-Gm*bdz/r3,axis=1)
         msk = (b.q>0)
-        if np.sum(msk)>0:
-            # do the magnetic field!
+        if np.sum(msk)>0:# magnetic field
             xe,ye,ze = b[1].x,b[1].y,b[1].z
             vxe,vye,vze = b[1].vx,b[1].vy,b[1].vz
             mmuEarth = 1e10
@@ -51,7 +51,7 @@ def acc(b,t,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitating
             b.ay[msk] += a[1]
             b.az[msk] += a[2]
         msk = (b.Q>0)
-        if np.sum(msk)>0:
+        if np.sum(msk)>0: #radiation pressure
             xs,ys,zs,vxs,vys,vzs = b[0].x,b[0].y,b[0].z,b[0].vx,b[0].vy,b[0].vz
             bt = b[msk]
             rx,ry,rz,vx,vy,vz = bt.x-xs,bt.y-ys,bt.z-zs,bt.vx-vxs,bt.vy-vys,bt.vz-vzs
@@ -65,11 +65,21 @@ def acc(b,t,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitating
             b.ax[msk] += radacc*rx/rr + pracc*vx
             b.ay[msk] += radacc*ry/rr + pracc*vy
             b.az[msk] += radacc*rz/rr + pracc*vz
-        return
+        return 
     for i in range(len(b)):
         dx,dy,dz = (bm.x-b.x[i]),(bm.y-b.y[i]),(bm.z-b.z[i])
         dr3 = (dx**2 + dy**2 + dz**2 + soft**2)**1.5;
-        b.ax[i],b.ay[i],b.az[i] = np.sum(GNewt*bm.m*dx/dr3),np.sum(GNewt*bm.m*dy/dr3),np.sum(GNewt*bm.m*dz/dr3)
+       # b.ax[i],b.ay[i],b.az[i] = np.sum(GNewt*bm.m*dx/dr3),np.sum(GNewt*bm.m*dy/dr3),np.sum(GNewt*bm.m*dz/dr3)
+        b.ax[i] = np.sum(GNewt*bm.m*dx/dr3)
+        b.ay[i] = np.sum(GNewt*bm.m*dy/dr3)
+        b.az[i] = np.sum(GNewt*bm.m*dz/dr3)
+        
+def ode(t, b):
+    # for simplicity, start by assuming y has only one object
+    x = b.x
+    y = b.y
+    z = b.z
+    
         
 def step(b,t,dt):
     b.x,b.y,b.z = b.x+0.5*dt*b.vx,b.y+0.5*dt*b.vy,b.z+0.5*dt*b.vz
@@ -228,5 +238,3 @@ def orbels(sat,ctrlmass): # a,e,i but i is rel to bg coordinates not anything se
     ecc = np.linalg.norm(np.cross(v,L)/(GNewt*m)-unitvec(r))
     inc = np.arccos(np.dot(unitvec(L),np.array([0.0,0.0,1.0])))
     return asemi,ecc,inc
-
-
