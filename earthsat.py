@@ -4,6 +4,7 @@ import pandas as pd
 import pylab as pl
 from constants import *
 from nbody import *
+from scipy.integrate import solve_ivp
 
 def printposvel(q):
     s = f'{q.x/AU:7.5f},{q.y/AU:7.5f},{q.z/AU:7.5f} AU'
@@ -38,7 +39,7 @@ if __name__ == '__main__':
     b[1] = setbody((earth.m,earth.r,earth.x,earth.y,earth.z,earth.vx,earth.vy,earth.vz))
     b[2] = setbody((moon.m,moon.r,moon.x,moon.y,moon.z,moon.vx,moon.vy,moon.vz))
     
-    print(ode(b))
+    print(solve_ivp(ode(b[:1]), (0., 365.*24.*3600.), initialState(b[:1])))
     
     exit()
 

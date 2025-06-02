@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.spatial.transform import Rotation as Ro
-import scipy as sp
 
 from constants import *
 
@@ -72,17 +71,33 @@ def accRad(b):
         b.ay[msk] += radacc*ry/rr + pracc*vy
         b.az[msk] += radacc*rz/rr + pracc*vz
     return b.ax, b.ay, b.az
-        
-def ode(b):
+
+def getPosition(b):
     n_bodies = len(b)
     
     pos = np.zeros((n_bodies, 3))
     for i in range(n_bodies):
         pos[i] = [b[i].x, b[i].y, b[i].z]
     
+    return pos
+
+def getVelocity(b):
+    n_bodies = len(b)
+    
     vel = np.zeros((n_bodies, 3))
     for i in range(n_bodies):
         vel[i] = [b[i].vx, b[i].vy, b[i].vz]
+    
+    return vel
+
+def initialState(b):
+    pos, vel = getPosition(b), getVelocity(b)
+    init_state = np.concatenate([pos.flatten(), vel.flatten()])
+    
+    return init_state
+
+def ode(b):
+    vel = getVelocity(b)
     
     grav_x, grav_y, grav_z = accGrav(b)
     mag_x, mag_y, mag_z = accMag(b)
