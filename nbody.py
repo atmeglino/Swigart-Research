@@ -73,12 +73,35 @@ def accRad(b):
         b.az[msk] += radacc*rz/rr + pracc*vz
     return b.ax, b.ay, b.az
         
-def ode(t, b):
-    # for simplicity, start by assuming y has only one object
-    x = b.x
-    y = b.y
-    z = b.z
+def ode(b):
+    n_bodies = len(b)
     
+    pos = np.zeros((n_bodies, 3))
+    for i in range(n_bodies):
+        pos[i] = [b[i].x, b[i].y, b[i].z]
+    
+    vel = np.zeros((n_bodies, 3))
+    for i in range(n_bodies):
+        vel[i] = [b[i].vx, b[i].vy, b[i].vz]
+    
+    acc_grav = np.column_stack([grav_x, grav_y, grav_z])
+    acc_mag = np.column_stack([mag_x, mag_y, mag_z]) 
+    acc_rad = np.column_stack([rad_x, rad_y, rad_z])
+    
+    acc = acc_grav + acc_mag + acc_rad
+    
+    return vel, acc
+
+def state_vector_to_bodies(b):
+    n_bodies = len(b)
+    bodies = np.zeros(n_bodies, dtype=bodyt)
+    
+    for i in range(n_bodies):
+        bodies[i].x, bodies[i].y, bodies[i].z = b[3*i:3*i+3]
+        bodies[i].vx, bodies[i].vy, bodies[i].vz = b[3*n_bodies + 3*i:3*n_bodies + 3*i+3]
+        bodies[i].m = b[i]
+    
+    return bodies
         
 def step(b,t,dt):
     b.x,b.y,b.z = b.x+0.5*dt*b.vx,b.y+0.5*dt*b.vy,b.z+0.5*dt*b.vz
