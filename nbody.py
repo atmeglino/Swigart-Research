@@ -31,10 +31,10 @@ def accGrav(b,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitati
         bdz = np.repeat(b.z[:,np.newaxis],len(bm),1)-np.repeat(bm.z[np.newaxis,:],len(b),0)
         r3 = (bdx**2+bdy**2+bdz**2+soft**2)**(3/2)
         Gm = GNewt*np.repeat(bm.m[np.newaxis,:],len(b),0)
-        b.axg = np.sum(-Gm*bdx/r3,axis=1)
-        b.ayg = np.sum(-Gm*bdy/r3,axis=1)
-        b.azg = np.sum(-Gm*bdz/r3,axis=1)
-    return b.axg, b.ayg, b.azg
+        b.ax = np.sum(-Gm*bdx/r3,axis=1)
+        b.ay = np.sum(-Gm*bdy/r3,axis=1)
+        b.az = np.sum(-Gm*bdz/r3,axis=1)
+    return b.ax, b.ay, b.az
 
 def accMag(b):
     msk = (b.q>0)
@@ -50,10 +50,10 @@ def accMag(b):
         B =  Bfield(np.array([rx,ry,rz])/meter,mmo,mu0)
         a = bt.q * np.cross(np.array([vx,vy,vz])/meter,B)/(bt.m/kg) # m/s^2
         a *= meter
-        b.axm[msk] += a[0]
-        b.aym[msk] += a[1]
-        b.azm[msk] += a[2]
-    return b.axm, b.aym, b.azm
+        b.ax[msk] += a[0]
+        b.ay[msk] += a[1]
+        b.az[msk] += a[2]
+    return b.ax, b.ay, b.az
         
 def accRad(b):
     msk = (b.Q>0)
@@ -68,10 +68,10 @@ def accRad(b):
         etadivQ = bt.eta/bt.Q
         radacc = Ap*S*bt.Q/clight/bt.m*(1+etadivQ*uswind/clight-(1+etadivQ)*(vx*rx+vy*ry+vz*rz)/rr/clight)
         pracc = -Ap*S*bt.Q/clight**2/bt.m*(1+etadivQ)
-        b.axr[msk] += radacc*rx/rr + pracc*vx
-        b.ayr[msk] += radacc*ry/rr + pracc*vy
-        b.azr[msk] += radacc*rz/rr + pracc*vz
-    return b.axr, b.ayr, b.azr
+        b.ax[msk] += radacc*rx/rr + pracc*vx
+        b.ay[msk] += radacc*ry/rr + pracc*vy
+        b.az[msk] += radacc*rz/rr + pracc*vz
+    return b.ax, b.ay, b.az
         
 def ode(t, b):
     # for simplicity, start by assuming y has only one object
