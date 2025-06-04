@@ -39,7 +39,7 @@ if __name__ == '__main__':
     b[1] = setbody((earth.m,earth.r,earth.x,earth.y,earth.z,earth.vx,earth.vy,earth.vz))
     b[2] = setbody((moon.m,moon.r,moon.x,moon.y,moon.z,moon.vx,moon.vy,moon.vz))
     
-    print(solve_ivp(ode(b[:1]), (0., 365.*24.*3600.), initialState(b[:1])))
+    print(solve_ivp(ode, (0, 365*24*3600), initialState(b[:1]), args = (b[:1],)))
     
     exit()
 

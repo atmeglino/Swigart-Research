@@ -96,7 +96,14 @@ def initialState(b):
     
     return init_state
 
-def ode(b):
+def ode(t, y, b):
+    n_bodies = len(b)
+    
+    # Update positions and velocities in b from y
+    for i in range(n_bodies):
+        b[i].x, b[i].y, b[i].z = y[3*i:3*i+3]
+        b[i].vx, b[i].vy, b[i].vz = y[3*n_bodies + 3*i:3*n_bodies + 3*i+3]
+    
     vel = getVelocity(b)
     
     grav_x, grav_y, grav_z = accGrav(b)
