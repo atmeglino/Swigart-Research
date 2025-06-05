@@ -99,7 +99,8 @@ def initialState(b):
 def ode(t, y, b):
     n_bodies = len(b)
     
-    # Update positions and velocities in b from y
+    # solve_ivp uses y (flat array of state variables) but our physics functions
+    # use b (structured array), so must re-write y into b
     for i in range(n_bodies):
         b[i].x, b[i].y, b[i].z = y[3*i:3*i+3]
         b[i].vx, b[i].vy, b[i].vz = y[3*n_bodies + 3*i:3*n_bodies + 3*i+3]
