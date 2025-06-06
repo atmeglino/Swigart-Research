@@ -50,14 +50,14 @@ if __name__ == '__main__':
     ye = res.y[4,:]
     ze = res.y[5,:]
     
-    #print(initialState(b))
+    print(initialState(b))
     #print(xe)
     
-    pl.clf()
+   # pl.clf()
     #pl.plot(xs,ys,'.k')
     #pl.plot(xe,ye,'.k')
-    pl.plot(res.t,xe,'.k')
-    pl.show()
+    #pl.plot(res.t,xe,'.k')
+    #pl.show()
     
     exit()
 

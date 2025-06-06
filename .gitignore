@@ -2,3 +2,4 @@ venv
 __pycache__
 *.pdf
 tmp.png
+.vscode/settings.json
