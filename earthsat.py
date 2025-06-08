@@ -39,6 +39,8 @@ if __name__ == '__main__':
     b[1] = setbody((earth.m,earth.r,earth.x,earth.y,earth.z,earth.vx,earth.vy,earth.vz))
     #b[2] = setbody((moon.m,moon.r,moon.x,moon.y,moon.z,moon.vx,moon.vy,moon.vz))
     
+    print(b[1])
+    
     res = solve_ivp(ode, (0, 365*24*3600), initialState(b), args=(b,), rtol=1e-4)
     
     # print(res.t.shape, res.y.shape)
@@ -50,10 +52,10 @@ if __name__ == '__main__':
     ye = res.y[4,:]
     ze = res.y[5,:]
     
-    print(initialState(b))
+    #print(initialState(b))
     #print(xe)
     
-   # pl.clf()
+    #pl.clf()
     #pl.plot(xs,ys,'.k')
     #pl.plot(xe,ye,'.k')
     #pl.plot(res.t,xe,'.k')

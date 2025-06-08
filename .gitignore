@@ -3,3 +3,4 @@ __pycache__
 *.pdf
 tmp.png
 .vscode/settings.json
+.DS_Store
