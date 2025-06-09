@@ -21,7 +21,7 @@ def beta_estx(rp,mp,Q):
     return rp**2*Lsun/4*Q/(GNewt*clight*mp*Msun)
 
 def accGrav(b,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitating mass.
-    global Lsun,GNewt,uswind
+    # global Lsun,GNewt,uswind
     b.ax = b.ay = b.az = 0.0
     bm = b[b.m>mthresh]
     if True: # gravational force
@@ -30,13 +30,14 @@ def accGrav(b,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitati
         bdz = np.repeat(b.z[:,np.newaxis],len(bm),1)-np.repeat(bm.z[np.newaxis,:],len(b),0)
         r3 = (bdx**2+bdy**2+bdz**2+soft**2)**(3/2)
         Gm = GNewt*np.repeat(bm.m[np.newaxis,:],len(b),0)
+        # Instead of putting into b, put into a new array, say acc_grav
         b.ax = np.sum(-Gm*bdx/r3,axis=1)
         b.ay = np.sum(-Gm*bdy/r3,axis=1)
         b.az = np.sum(-Gm*bdz/r3,axis=1)
     return b.ax, b.ay, b.az
 
 def accMag(b):
-    msk = (b.q>0)
+    msk = (b['q']>0)
     if np.sum(msk)>0:# magnetic field
         xe,ye,ze = b[1].x,b[1].y,b[1].z
         vxe,vye,vze = b[1].vx,b[1].vy,b[1].vz
@@ -49,13 +50,14 @@ def accMag(b):
         B =  Bfield(np.array([rx,ry,rz])/meter,mmo,mu0)
         a = bt.q * np.cross(np.array([vx,vy,vz])/meter,B)/(bt.m/kg) # m/s^2
         a *= meter
+        # Instead of putting into b, put into a new array, say acc_mag
         b.ax[msk] += a[0]
         b.ay[msk] += a[1]
         b.az[msk] += a[2]
     return b.ax, b.ay, b.az
         
 def accRad(b):
-    msk = (b.Q>0)
+    msk = (b['Q']>0)
     if np.sum(msk)>0: #radiation pressure
         xs,ys,zs,vxs,vys,vzs = b[0].x,b[0].y,b[0].z,b[0].vx,b[0].vy,b[0].vz
         bt = b[msk]
@@ -67,6 +69,7 @@ def accRad(b):
         etadivQ = bt.eta/bt.Q
         radacc = Ap*S*bt.Q/clight/bt.m*(1+etadivQ*uswind/clight-(1+etadivQ)*(vx*rx+vy*ry+vz*rz)/rr/clight)
         pracc = -Ap*S*bt.Q/clight**2/bt.m*(1+etadivQ)
+        # Instead of putting into b, put into a new array, say acc_rad
         b.ax[msk] += radacc*rx/rr + pracc*vx
         b.ay[msk] += radacc*ry/rr + pracc*vy
         b.az[msk] += radacc*rz/rr + pracc*vz
