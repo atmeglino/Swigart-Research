@@ -25,19 +25,19 @@ if __name__ == '__main__':
     fil = 'solarsystem.csv'
     dfsolsys = pd.read_csv(fil)
 
-    nb = 2 # sun-earth-moon only
+    nb = 3 # sun-earth-moon only
     sun = dfsolsys.iloc[0]
     earth = dfsolsys.iloc[3]
-    #moon = dfsolsys.iloc[4]
+    moon = dfsolsys.iloc[4]
     # ugh, best to look at the csv file...sorry
-    ndust = 0
+    ndust = 1
 
     # set up planet info in an array "b" w/elemets of type bodyt
     # bodyt definesmembers m,r,x,y,z,vx,vy,vz and more! *** units are cgs!!!!! ***
     b = np.zeros(nb+ndust,dtype=bodyt).view(np.recarray)
     b[0] = setbody((sun.m,sun.r,sun.x,sun.y,sun.z,sun.vx,sun.vy,sun.vz))
     b[1] = setbody((earth.m,earth.r,earth.x,earth.y,earth.z,earth.vx,earth.vy,earth.vz))
-    #b[2] = setbody((moon.m,moon.r,moon.x,moon.y,moon.z,moon.vx,moon.vy,moon.vz))
+    b[2] = setbody((moon.m,moon.r,moon.x,moon.y,moon.z,moon.vx,moon.vy,moon.vz))
     
     # print(initialState(b))
     
@@ -53,17 +53,19 @@ if __name__ == '__main__':
     xe = res.y[3,:]
     ye = res.y[4,:]
     ze = res.y[5,:]
+    xm = res.y[6,:]
+    ym = res.y[7,:]
+    zm = res.y[8,:]
     
     #print(initialState(b))
     #print(xe)
     
     pl.clf()
-    pl.plot(xs,ys,'.k')
-    pl.plot(xe,ye,'.k')
+    pl.plot(xs,ys, '.k', color='green')
+    pl.plot(xe,ye, '.k', color='blue')
+    pl.plot(xm,ym, ':', color='red', linewidth=4)
     # pl.plot(res.t,xe,'.k')
     pl.show()
-    
-    exit()
 
     tnowjd = sun.jd
     teqxjd = TmarchequinoxEarth2026JD

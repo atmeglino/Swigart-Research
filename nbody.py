@@ -111,14 +111,14 @@ def ode(t, y, b):
     vel = getVelocity(b)
     
     grav_x, grav_y, grav_z = accGrav(b)
-    mag_x, mag_y, mag_z = accMag(b)
-    rad_x, rad_y, rad_z = accRad(b)
+    # mag_x, mag_y, mag_z = accMag(b)
+    # rad_x, rad_y, rad_z = accRad(b)
     
     acc_grav = np.column_stack([grav_x, grav_y, grav_z])
-    acc_mag = np.column_stack([mag_x, mag_y, mag_z]) 
-    acc_rad = np.column_stack([rad_x, rad_y, rad_z])
+    # acc_mag = np.column_stack([mag_x, mag_y, mag_z]) 
+    # acc_rad = np.column_stack([rad_x, rad_y, rad_z])
     
-    acc = acc_grav + acc_mag + acc_rad
+    acc = acc_grav # + acc_mag + acc_rad
     
     dydt = np.concatenate([vel.flatten(), acc.flatten()])
     
