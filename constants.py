@@ -5,6 +5,8 @@ from numpy import pi
 GNewt = 6.67403e-8
 
 km = 1e5
+kg = 1e3
+meter = 1e2
 hour = 3600.0
 day = 24*hour
 yr = 365.25*day 
@@ -13,10 +15,11 @@ year = yr
 degree = 3.1415926535897932385/180
 
 PspinEarth = 23.9344695944*hour # from JPL Horizons
-PorbitEarth = 365.25636*day # orbital period 
+PorbitEarth = 365.25636*day # orbital period
 tiltEarth = 23.4392911*degree # radians
 TjunesolsticeEarth2025JD = 2460846.61251; # where did i get this?
-TmarchequinoxEarth2026JD = 2460754.8756944 # print(2460754.8756944 + 3*hour/day)
+TmarchequinoxEarth2025JD = 2460754.8756944 # print(2460754.8756944 + 3*hour/day)
+
 
 AU =  1.495978707e13
 pc = 3.8057e18
@@ -30,13 +33,17 @@ Msun = 1.9884903130783e+33 # from JPL Horizons on 2024/12/22
 Msolar = Msun
 Lsun = 3.826e33
 Lsolar = Lsun
+Tsun = 5800.0
+Magmoearth = 7.94e22 # A m^2
+Magmoearthlalo = (85.762,139.298) # lat, lon in degrees of magnetic north
 
 clight = 2.99792458e10 
 uswind = 450e5
 micron = 1e-4 # cgs
 kB = 1.3807e-16
 hplanck = 6.6261e-27
-Tsun = 5800.0
+mu0 = 4*3.1415926535897932385*1e-7 # vacuum permeability 
+
 
 nsalt = 1.5 - 1e-6j; rhosalt = 2.0
 nglass = 1.5 - 1e-8j; rhoglass = 2.7
@@ -51,5 +58,4 @@ rhoolivine =  2.7; nolivine = 1.7 - 1.0e-3j
 
 # gold spheres
 rhogold = 19.3; ngold = 0.27 - 2.9j
-
 

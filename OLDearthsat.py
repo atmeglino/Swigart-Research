@@ -30,7 +30,7 @@ if __name__ == '__main__':
     earth = dfsolsys.iloc[3]
     moon = dfsolsys.iloc[4]
     # ugh, best to look at the csv file...sorry
-    ndust = 1
+    ndust = 0
 
     # set up planet info in an array "b" w/elemets of type bodyt
     # bodyt definesmembers m,r,x,y,z,vx,vy,vz and more! *** units are cgs!!!!! ***
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     b[0] = setbody((sun.m,sun.r,sun.x,sun.y,sun.z,sun.vx,sun.vy,sun.vz))
     b[1] = setbody((earth.m,earth.r,earth.x,earth.y,earth.z,earth.vx,earth.vy,earth.vz))
     b[2] = setbody((moon.m,moon.r,moon.x,moon.y,moon.z,moon.vx,moon.vy,moon.vz))
-
+    
     '''
     tnowjd = sun.jd
     teqxjd = TmarchequinoxEarth2026JD
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     print('degrees off horizon:',90-np.arccos(np.dot(eup,esun))/degree)
     esunperp = esun - np.dot(eup,esun)*eup
     print('degrees off east:',np.arctan2(np.dot(esunperp,enorth),np.dot(esunperp,eeast))/degree)
-    '''
+    
     # now set up a tracer particle, orbiting earth...
     tridx = nb # tracer in
     r = 15*earth.r
@@ -76,7 +76,7 @@ if __name__ == '__main__':
     vx,vy,vz = 0,v,0
     b[tridx] = setbody((0,0,earth.x+x,earth.y+y,earth.z+z,earth.vx+vx,earth.vy+vy,earth.vz+vz))
     b[tridx].q = 1e3
-    
+    '''
     t_eval = np.linspace(0,0.95*year,500)
     
     res = solve_ivp(ode, (t_eval[0], t_eval[-1]), initialState(b), args=(b,), rtol=1e-4, t_eval=t_eval)
@@ -90,15 +90,15 @@ if __name__ == '__main__':
     xm = res.y[6,:]
     ym = res.y[7,:]
     zm = res.y[8,:]
-    xp = res.y[9,:]
-    yp = res.y[10,:]
-    zp = res.y[11,:]
+    #xp = res.y[9,:]
+    #yp = res.y[10,:]
+    #zp = res.y[11,:]
     
     pl.clf()
     #pl.plot(xs,ys, '.k', color='green')
     pl.plot(xe,ye, '.k', color='blue')
     pl.plot(xm,ym, ':', color='red', linewidth=4)
-    pl.plot(xp,yp, ':', color='pink', linewidth=2)
+    #pl.plot(xp,yp, ':', color='pink', linewidth=2)
     # pl.plot(res.t,xe,'.k')
     pl.show()
     

@@ -2,15 +2,47 @@
 import numpy as np
 import pandas as pd
 import pylab as pl
+import nbody as nb
 from constants import *
-from nbody import *
 from scipy.integrate import solve_ivp
+
 
 def printposvel(q):
     s = f'{q.x/AU:7.5f},{q.y/AU:7.5f},{q.z/AU:7.5f} AU'
     s += f', {q.vx/km:7.5f}{q.vy/km:7.5f}{q.vz/km:7.5f} km/s'
     print(s)
 
+def test_integration_error(b,tnow,trun):
+    # integration error check
+    methods = ['rk45','leap2','symp4','symp6']  # rk45 is best for mag fields, symp6 is best for pure grav!
+    nsteps = [50,100,200,500,1000,2000,5000]
+    Estart = nb.energy(b)
+    for nstep in nsteps:
+        btmp = b.copy()
+        nb.steps(btmp,tnow,trun,nstep,nb.acc,method=methods[0]) # [0] is default method
+        Efinish = nb.energy(btmp)
+        print(f'nsteps={nstep:5d}: rel err Energy = {np.abs((Efinish-Estart)/Estart):1.5e}')
+
+def test_local_frame(tnewjd,latdeg,londeg,tnew,b,tnbody,tref,bfref,pspin):
+    # awkward units!  tnewjd is JD, other times are sec
+    # pick a loc on Earth and a time (sunset); see where sun is, rel to zenith, horizon
+    eup,enorth,eeast = nb.localframelalo(latdeg,londeg,tnew,tref,bfref,pspin) # unit spher'l polar
+    btmp = b.copy()
+    #print('xy',btmp[1].x/AU,btmp.y[1]/AU)
+    #print('tnow',(tnew-tnbody)/year)
+    #esun = nb.unitvec(nb.posrel(btmp[0],btmp[1]))
+    #print('esun',esun)
+    nb.steps(btmp,tnbody,(tnew-tnbody),nb.ntimesteps_suggest(tnew-tnbody,year),nb.acc) 
+    esun = nb.unitvec(nb.posrel(btmp[0],btmp[1]))
+    #print('esun',esun)
+    sunperp = esun - np.dot(eup,esun)*eup # sun's dir projected onto local horizon plane
+    zenithang = np.arccos(np.dot(eup,esun))
+    horizang = np.arctan2(np.dot(sunperp,enorth),np.dot(sunperp,eeast)) # rel to east
+    (horizangrel,ewdir) = (horizang,'East') if (np.abs(horizang)<np.pi/2) else (np.pi-horizang,'West')
+    nsdir = 'North' if horizangrel > 0 else 'South'
+    print(f'sun is {zenithang/degree} degrees from local zenith.')
+    print(f'and {horizangrel/degree} degrees {nsdir} of {ewdir}')
+        
 # ---- Main ----- #
 if __name__ == '__main__':
 
@@ -25,27 +57,109 @@ if __name__ == '__main__':
     fil = 'solarsystem.csv'
     dfsolsys = pd.read_csv(fil)
 
-    nb = 3 # sun-earth-moon only
+    nbodies = 3 # sun-earth-moon only
     sun = dfsolsys.iloc[0]
     earth = dfsolsys.iloc[3]
     moon = dfsolsys.iloc[4]
     # ugh, best to look at the csv file...sorry
-    ndust = 1
+    ndust = 0
 
     # set up planet info in an array "b" w/elemets of type bodyt
     # bodyt definesmembers m,r,x,y,z,vx,vy,vz and more! *** units are cgs!!!!! ***
-    b = np.zeros(nb+ndust,dtype=bodyt).view(np.recarray)
-    b[0] = setbody((sun.m,sun.r,sun.x,sun.y,sun.z,sun.vx,sun.vy,sun.vz))
-    b[1] = setbody((earth.m,earth.r,earth.x,earth.y,earth.z,earth.vx,earth.vy,earth.vz))
-    b[2] = setbody((moon.m,moon.r,moon.x,moon.y,moon.z,moon.vx,moon.vy,moon.vz))
+    b = np.zeros(nbodies+ndust,dtype=nb.bodyt).view(np.recarray)
+    b[0] = nb.setbody((sun.m,sun.r,sun.x,sun.y,sun.z,sun.vx,sun.vy,sun.vz))
+    b[1] = nb.setbody((earth.m,earth.r,earth.x,earth.y,earth.z,earth.vx,earth.vy,earth.vz))
+    b[2] = nb.setbody((moon.m,moon.r,moon.x,moon.y,moon.z,moon.vx,moon.vy,moon.vz))
     
-    # print(initialState(b))
+    a = [b[0].x,b[0].y,b[0].z,b[1].x,b[1].y,b[1].z,b[0].vx,b[0].vy,b[0].vz,b[1].vx,b[1].vy,b[1].vz]
+    #print(a);
+    [print(f'{x:1.13e},',end=' ') for x in a]
+    print(' ' )
     
+    tnowjd = sun.jd
+    teqxjd = TmarchequinoxEarth2025JD # this must be a march equinox in julian daya
+    tilt,pspin,porbit = tiltEarth,PspinEarth,PorbitEarth
+    print('this epoch UTC:',pd.to_datetime(tnowjd,unit='D',origin='julian'))
+    print(teqxjd)
+    print('Earth frame reference date:',pd.to_datetime(teqxjd,unit='D',origin='julian'))
+    
+    # bfeq = nb.bodyframe_equinox(tilt,orbinfo=(b,0,1,(teqxjd-tnowjd)*day)) # use this for mars
+    bfeq = nb.bodyframe_earth(b,0,1,tnowjd*day,teqxjd*day,tilt,pspin) 
+
+    # here set up the Earth's magnetic field. not sure how to do this in a good way
+    # so let's do it. in nbody.py there is a space to calc earth mag mo, just spagetti code it in
+    # nb.magmoearthlalo = (90,0)
+    nb.earth_magnetic_moment_init(b,tnowjd*day,si=0,ei=1)
+    mmo = nb.earth_magnetic_moment(tnowjd*day)
+    print(f'mag north rel tilt: {np.arccos(np.dot(bfeq[2],nb.unitvec(mmo)))/degree:1.5} deg')
+    
+    mytest = True
+    #mytest = False
+    '''
+    if mytest:
+        # test how well we conserve energy....
+        trun = 1*year
+        print('\n-- energy conservation test --')
+        #test_integration_error(b,tnowjd*day,trun)
+
+        # resolving a reference frame on Earth
+        lat,lon = 40.7606,-111.8881 # N,W => < 0, for slc
+        tnewjd = 2460834.6236111 # 2025-06-08 02:57:59.999041536 sunset in SLC
+        print('\n-- late spring sunset in SLC! --')
+        print('UTC, lat, long:',pd.to_datetime(tnewjd,unit='D',origin='julian'),lat,lon,'degrees')
+        test_local_frame(tnewjd,lat,lon, tnewjd*day,b,tnowjd*day,teqxjd*day,bfeq,pspin)
+    
+    
+    # now set up a tracer particle, orbiting earth around equatorial plane + random motion
+    if ndust:
+        planet = b[1]
+        dustidx = nbodies # tracer in
+        rho,rphys = 2.0,1.0*micron
+        b[dustidx:].r = rphys
+        b[dustidx:].q = 1e-12 # Coulombs
+        b[dustidx:].m = 4*np.pi/3*rho*b[dustidx:].r**3
+        b[dustidx:].x, b[dustidx:].y, b[dustidx:].z  = planet.x, planet.y, planet.z
+        b[dustidx:].vx,b[dustidx:].vy,b[dustidx:].vz = planet.vx,planet.vy,planet.vz
+        ex,ey,ez = nb.bodyframe(tnowjd*day,teqxjd*day,bfeq,pspin)
+        r = 15*planet.r
+        v = np.sqrt(GNewt*planet.m/r)
+        phi = np.random.uniform(0,2*np.pi,ndust)[:,np.newaxis] # new axis to spread around 3d coord variables
+        pos =  r*np.cos(phi)*ex + r*np.sin(phi)*ey
+        vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ey
+        b[dustidx:].x  += pos[:,0]; b[dustidx:].y  += pos[:,1]; b[dustidx:].z  += pos[:,2] 
+        b[dustidx:].vx += vel[:,0]; b[dustidx:].vy += vel[:,1]; b[dustidx:].vz += vel[:,2] 
+    
+    # --- all done set up! --- prelim check: orb els of earth...
+    a,e,i = nb.orbels(b[1],b[0])
+    print('earth orb els:',a/AU,'AU;',e,i*180/np.pi,'deg')
+
+    a,e,i = nb.orbels(b[2],b[1],ez=bfeq[2])
+    print('moon orb els:',a/Rearth,'AU;',e,i*180/np.pi,'deg')
+
+    # get ready to integrate, define num of timesteps, substeps .....
+    P = 2*np.pi*r/v # dynamical time, or use orbital period...
+    trun, nt = 27*day, 250
+    dt = trun / nt
+    ntsub = nb.ntimesteps_suggest(dt,day) 
+
+    # --- main time loop --- #
+    
+    tnow = tnowjd * day
+
+    framedat = [] # space to save stuff to plot later...
+    for i in range(nt):
+        nb.steps(b,tnow,dt,ntsub,nb.acc)  # integrate!
+        tnow += dt
+        print(f'time: {tnow/day} JD; dist check: {nb.pairsep(b[-1],b[1])/Rearth} R_Earth')
+        # below is time, sun_x,sun_y,sun_z,earth_x,earth_y,earth_z,...
+        framedat.append([tnow]+[xyz for p in b for xyz in (p.x, p.y, p.z)]) 
+        #if i == 2: break
+    framedat = np.array(framedat)
+    '''
+    # --- done!!! --- #
     t_eval = np.linspace(0,0.95*year,500)
     
-    res = solve_ivp(ode, (t_eval[0], t_eval[-1]), initialState(b), args=(b,), rtol=1e-4, t_eval=t_eval)
-    
-    # print(res.t.shape, res.y.shape)
+    res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-4, t_eval=t_eval)
     
     xs = res.y[0,:]
     ys = res.y[1,:]
@@ -56,84 +170,37 @@ if __name__ == '__main__':
     xm = res.y[6,:]
     ym = res.y[7,:]
     zm = res.y[8,:]
-    
-    #print(initialState(b))
-    #print(xe)
+    #xp = res.y[9,:]
+    #yp = res.y[10,:]
+    #zp = res.y[11,:]
     
     pl.clf()
     pl.plot(xs,ys, '.k', color='green')
     pl.plot(xe,ye, '.k', color='blue')
     pl.plot(xm,ym, ':', color='red', linewidth=4)
+    #pl.plot(xp,yp, ':', color='pink', linewidth=2)
     # pl.plot(res.t,xe,'.k')
     pl.show()
-
-    tnowjd = sun.jd
-    teqxjd = TmarchequinoxEarth2026JD
-    tilt = tiltEarth
-    pspin = PspinEarth
-    porbit = PorbitEarth
-
-    # bfeq = bodyframe_equinox(tilt,orbinfo=(b,0,1,(teqxjd-tnowjd)*day))
-    bfeq = bodyframe_earth(b,0,1,tnowjd*day,teqxjd*day,tilt,pspin)
-
-    # move to a new time, sunset in SLC valley
-    tnewjd = 2460834.6236111
-    tnewjd = 2461746.4996528 # 2026?
     
-    #tnewjd = teqxjd + 6*hour/day
-    print('tnew:',pd.to_datetime(tnewjd,unit='D',origin='julian'))
-    btmp = b.copy()
-    steps(btmp,tnowjd*day,(tnewjd-tnowjd)*day,100)  # integrate!
-    esun = unitvec(posrel(btmp[0],btmp[1]))
-
-    lat,lon = 40.7606,-111.8881 # N,W => < 0, for slc
-    eup,enorth,eeast = localframelalo(lat,lon,tnewjd*day,teqxjd*day,bfeq,pspin)
-    #lat,lon = 0,-45 # N,W => < 0, for slc
-    # lat,lon = 0.,0 # N,W => < 0, for slc
-
-    print('degrees off horizon:',90-np.arccos(np.dot(eup,esun))/degree)
-    esunperp = esun - np.dot(eup,esun)*eup
-    print('degrees off east:',np.arctan2(np.dot(esunperp,enorth),np.dot(esunperp,eeast))/degree)
-
-    quit()
-    # now set up a tracer particle, orbiting earth...
-    tridx = nb # tracer in
-    r = 15*earth.r
-    v = np.sqrt(GNewt*earth.m/r)
-    x,y,z = r,0,0
-    vx,vy,vz = 0,v,0
-    b[tridx] = setbody((0,0,earth.x+x,earth.y+y,earth.z+z,earth.vx+vx,earth.vy+vy,earth.vz+vz))
-    b[tridx].q = 1e3
+    exit()
     
-    # --- all done set up! --- prelim check: orb els of earth...
-    a,e,i = orbels(b[1],b[0])
-    print('earth orb els:',a/AU,'AU;',e,i*180/np.pi,'deg')
-
-    # set up for plotting
-    pl.gca().set_aspect('equal')
-    pl.xlabel('x [Earth radii]')
-    pl.xlabel('t [Earth radii]')
-
-    # get ready to integrate, define num of timesteps, substeps .....
-    P = 2*np.pi*r/v # dynamical time, or use orbital period...
-    trun, nt = 27*day, 50
-    dt = trun / nt
-    ntsub = int(40 * np.ceil(dt / P))
-
-    # --- main time loop --- #
-    tnow = tnowjd * day
-    for i in range(nt):
-        steps(b,tnow,dt,ntsub)  # integrate!
-        tnow += dt
-        tnow = dt*(i+1)
-        # plot pos in x-y relative to earth
-        pl.plot((b[1:].x-b[1].x)/earth.r,(b[1:].y-b[1].y)/earth.r,'.k')
-        print(i,tnow/year,'yr;',pairsep(b[1],b[-1])/earth.r)
-
     # dump out a plot of results
+    out = ''
     out = 'earthsat.pdf'
-    
-    pl.savefig(out)
-    import os
-    if os.path.isfile('/uufs/astro.utah.edu/common/home/u0095165/www/tmp.jpg'):
-        os.system('convert '+out+' ~/www/tmp.jpg')
+
+    if out:
+        # set up for plotting, just the dust in earth frame
+        pl.gca().set_aspect('equal')
+        pl.xlabel('x [Earth radii]')
+        pl.ylabel('z [Earth radii]')
+        x = framedat[:,3*nbodies+1::3]-framedat[:,[4]]
+        y = framedat[:,3*nbodies+2::3]-framedat[:,[5]]
+        z = framedat[:,3*nbodies+3::3]-framedat[:,[6]]
+        #x = framedat[:,1+3:3*nbodies:3]-framedat[:,[4]]
+        #y = framedat[:,2+3:3*nbodies:3]-framedat[:,[5]]
+        pl.plot(x/Rearth,z/Rearth,'-')
+        pl.savefig(out)
+        import os
+        if os.path.isfile('/uufs/astro.utah.edu/common/home/u0095165/www/tmp.jpg'):
+            os.system('cp '+out+' ~/www/tmp.pdf')
+            os.system('convert '+out+' ~/www/tmp.jpg')
