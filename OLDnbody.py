@@ -123,7 +123,7 @@ def ode(t, y, b):
     dydt = np.concatenate([vel.flatten(), acc.flatten()])
     
     return dydt
-        
+
 def step(b,t,dt):
     b.x,b.y,b.z = b.x+0.5*dt*b.vx,b.y+0.5*dt*b.vy,b.z+0.5*dt*b.vz
     acc(b,t+0.5*dt)

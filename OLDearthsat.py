@@ -2,8 +2,8 @@
 import numpy as np
 import pandas as pd
 import pylab as pl
-from constants import *
-from nbody import *
+from OLDconstants import *
+from OLDnbody import *
 from scipy.integrate import solve_ivp
 
 def printposvel(q):
@@ -25,16 +25,16 @@ if __name__ == '__main__':
     fil = 'solarsystem.csv'
     dfsolsys = pd.read_csv(fil)
 
-    nb = 3 # sun-earth-moon only
+    nbodies = 3 # sun-earth-moon only
     sun = dfsolsys.iloc[0]
     earth = dfsolsys.iloc[3]
     moon = dfsolsys.iloc[4]
     # ugh, best to look at the csv file...sorry
-    ndust = 0
+    ndust = 1
 
     # set up planet info in an array "b" w/elemets of type bodyt
     # bodyt definesmembers m,r,x,y,z,vx,vy,vz and more! *** units are cgs!!!!! ***
-    b = np.zeros(nb+ndust,dtype=bodyt).view(np.recarray)
+    b = np.zeros(nbodies+ndust,dtype=bodyt).view(np.recarray)
     b[0] = setbody((sun.m,sun.r,sun.x,sun.y,sun.z,sun.vx,sun.vy,sun.vz))
     b[1] = setbody((earth.m,earth.r,earth.x,earth.y,earth.z,earth.vx,earth.vy,earth.vz))
     b[2] = setbody((moon.m,moon.r,moon.x,moon.y,moon.z,moon.vx,moon.vy,moon.vz))
@@ -67,7 +67,9 @@ if __name__ == '__main__':
     print('degrees off horizon:',90-np.arccos(np.dot(eup,esun))/degree)
     esunperp = esun - np.dot(eup,esun)*eup
     print('degrees off east:',np.arctan2(np.dot(esunperp,enorth),np.dot(esunperp,eeast))/degree)
+    '''
     
+    '''
     # now set up a tracer particle, orbiting earth...
     tridx = nb # tracer in
     r = 15*earth.r
@@ -77,6 +79,24 @@ if __name__ == '__main__':
     b[tridx] = setbody((0,0,earth.x+x,earth.y+y,earth.z+z,earth.vx+vx,earth.vy+vy,earth.vz+vz))
     b[tridx].q = 1e3
     '''
+    if ndust:
+        planet = b[1]
+        dustidx = nbodies # tracer in
+        rho,rphys = 2.0,1.0*micron
+        b[dustidx:].r = rphys
+        b[dustidx:].q = 1e-12 # Coulombs
+        b[dustidx:].m = 4*np.pi/3*rho*b[dustidx:].r**3
+        b[dustidx:].x, b[dustidx:].y, b[dustidx:].z  = planet.x, planet.y, planet.z
+        b[dustidx:].vx,b[dustidx:].vy,b[dustidx:].vz = planet.vx,planet.vy,planet.vz
+        # ex,ey,ez = bodyframe(tnowjd*day,teqxjd*day,bfeq,pspin)
+        r = 15*planet.r
+        v = np.sqrt(GNewt*planet.m/r)
+        phi = np.random.uniform(0,2*np.pi,ndust)[:,np.newaxis] # new axis to spread around 3d coord variables
+        # pos =  r*np.cos(phi)*ex + r*np.sin(phi)*ey
+        # vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ey
+        # b[dustidx:].x  += pos[:,0]; b[dustidx:].y  += pos[:,1]; b[dustidx:].z  += pos[:,2] 
+        # b[dustidx:].vx += vel[:,0]; b[dustidx:].vy += vel[:,1]; b[dustidx:].vz += vel[:,2] 
+    
     t_eval = np.linspace(0,0.95*year,500)
     
     res = solve_ivp(ode, (t_eval[0], t_eval[-1]), initialState(b), args=(b,), rtol=1e-4, t_eval=t_eval)
@@ -90,15 +110,15 @@ if __name__ == '__main__':
     xm = res.y[6,:]
     ym = res.y[7,:]
     zm = res.y[8,:]
-    #xp = res.y[9,:]
-    #yp = res.y[10,:]
-    #zp = res.y[11,:]
+    xp = res.y[9,:]
+    yp = res.y[10,:]
+    zp = res.y[11,:]
     
     pl.clf()
     #pl.plot(xs,ys, '.k', color='green')
     pl.plot(xe,ye, '.k', color='blue')
     pl.plot(xm,ym, ':', color='red', linewidth=4)
-    #pl.plot(xp,yp, ':', color='pink', linewidth=2)
+    pl.plot(xp,yp, ':', color='pink', linewidth=2)
     # pl.plot(res.t,xe,'.k')
     pl.show()
     
