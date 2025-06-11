@@ -161,7 +161,7 @@ if __name__ == '__main__':
     # --- done!!! --- #
     t_eval = np.linspace(0,1*year,500)
     
-    res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-4, t_eval=t_eval)
+    res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-6, t_eval=t_eval)
     
     xs = res.y[0,:]
     ys = res.y[1,:]
@@ -177,11 +177,16 @@ if __name__ == '__main__':
     zp = res.y[11,:]
     
     pl.clf()
-    pl.plot(xs,ys, '.k', color='green')
-    pl.plot(xe,ye, '.k', color='blue')
-    pl.plot(xm,ym, ':', color='red', linewidth=4)
-    pl.plot(xp,yp, ':', color='pink', linewidth=2)
+    # Plot below to see sun, earth, moon system (doesn't work with particle)
+    #pl.plot(xs,ys, '.k', color='green')
+    #pl.plot(xe,ye, '.k', color='blue')
+    #pl.plot(xm,ym, ':', color='red', linewidth=4)
+    #l.plot(xp,yp, ':', color='pink', linewidth=2)
     #pl.plot(res.t,xe,'.k')
+    
+    # Plot below to see moon and particle relative to earth (?)
+    pl.plot(xm-xe,ym-ye,'.m', color='red')
+    pl.plot(xp-xe,yp-ye,'.:', color='pink')
     pl.show()
     
     exit()
