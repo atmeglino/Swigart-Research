@@ -181,7 +181,7 @@ if __name__ == '__main__':
     #pl.plot(xs,ys, '.k', color='green')
     #pl.plot(xe,ye, '.k', color='blue')
     #pl.plot(xm,ym, ':', color='red', linewidth=4)
-    #l.plot(xp,yp, ':', color='pink', linewidth=2)
+    #pl.plot(xp,yp, ':', color='pink', linewidth=2)
     #pl.plot(res.t,xe,'.k')
     
     # Plot below to see moon and particle relative to earth (?)

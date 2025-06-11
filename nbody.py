@@ -105,43 +105,41 @@ def acc(b,t,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitating
   
 def accGrav(b,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitating mass.
     # global Lsun,GNewt,uswind
-    b.ax = b.ay = b.az = 0.0
-    bm = b[b.m>mthresh]
-    if True: # gravational force
-        bdx = np.repeat(b.x[:,np.newaxis],len(bm),1)-np.repeat(bm.x[np.newaxis,:],len(b),0)
-        bdy = np.repeat(b.y[:,np.newaxis],len(bm),1)-np.repeat(bm.y[np.newaxis,:],len(b),0)
-        bdz = np.repeat(b.z[:,np.newaxis],len(bm),1)-np.repeat(bm.z[np.newaxis,:],len(b),0)
-        r3 = (bdx**2+bdy**2+bdz**2+soft**2)**(3/2)
-        Gm = GNewt*np.repeat(bm.m[np.newaxis,:],len(b),0)
-        # Instead of putting into b, put into a new array, say acc_grav
-        b.ax = np.sum(-Gm*bdx/r3,axis=1)
-        b.ay = np.sum(-Gm*bdy/r3,axis=1)
-        b.az = np.sum(-Gm*bdz/r3,axis=1)
-    return b.ax, b.ay, b.az
+    acc_grav = np.zeros((len(b), 3))
+    bm = b[b.m>mthresh] # gravity
+    bdx = np.repeat(b.x[:,np.newaxis],len(bm),1)-np.repeat(bm.x[np.newaxis,:],len(b),0)
+    bdy = np.repeat(b.y[:,np.newaxis],len(bm),1)-np.repeat(bm.y[np.newaxis,:],len(b),0)
+    bdz = np.repeat(b.z[:,np.newaxis],len(bm),1)-np.repeat(bm.z[np.newaxis,:],len(b),0)
+    r3 = (bdx**2+bdy**2+bdz**2+soft**2)**(3/2)
+    Gm = GNewt*np.repeat(bm.m[np.newaxis,:],len(b),0)
+    acc_grav[:,0] = np.sum(-Gm * bdx / r3, axis=1) # x-component
+    acc_grav[:,1] = np.sum(-Gm * bdy / r3, axis=1) # y-component
+    acc_grav[:,2] = np.sum(-Gm * bdz / r3, axis=1) # z-component
+    return acc_grav[:, 0], acc_grav[:, 1], acc_grav[:, 2]
 
-def accMag(b):
+def accMag(b, t):
+    acc_mag = np.zeros((len(b), 3))
     msk = (b['q']>0)
-    if np.sum(msk)>0:# magnetic field
+    if np.sum(msk)>0: # magnetic force
         xe,ye,ze = b[1].x,b[1].y,b[1].z
         vxe,vye,vze = b[1].vx,b[1].vy,b[1].vz
-        mmuEarth = 1e10
-        mmo  = mmuEarth = np.array([np.sin(23/180.*np.pi),0,np.cos(23/180.*np.pi)])
+        mmuEarth = 1e22
+        mmo  =  earth_magnetic_moment(t)
         bt = b[msk]
         rx,ry,rz,vx,vy,vz = bt.x-xe,bt.y-ye,bt.z-ze,bt.vx-vxe,bt.vy-vye,bt.vz-vze
         mu0 = 4*np.pi*1e-7
-        meter,kg = 100.0,1000.
-        B =  Bfield(np.array([rx,ry,rz])/meter,mmo,mu0)
-        a = bt.q * np.cross(np.array([vx,vy,vz])/meter,B)/(bt.m/kg) # m/s^2
-        a *= meter
-        # Instead of putting into b, put into a new array, say acc_mag
-        b.ax[msk] += a[0]
-        b.ay[msk] += a[1]
-        b.az[msk] += a[2]
-    return b.ax, b.ay, b.az
+        rvec,vvec = np.array([rx,ry,rz]).T,np.array([vx,vy,vz]).T
+        B =  Bfield(rvec/meter,mmo)
+        a = (bt.q/(bt.m/kg))[:,np.newaxis] * np.cross(vvec,B) # m/s^2 the meters cancel out
+        acc_mag[msk, 0] = a[:,0] # x-component
+        acc_mag[msk, 1] = a[:,1] # y-component
+        acc_mag[msk, 2] = a[:,2] # z-component
+    return acc_mag[:, 0], acc_mag[:, 1], acc_mag[:, 2]
         
 def accRad(b):
+    acc_rad = np.zeros((len(b), 3))
     msk = (b['Q']>0)
-    if np.sum(msk)>0: #radiation pressure
+    if np.sum(msk)>0: # radiation pressure
         xs,ys,zs,vxs,vys,vzs = b[0].x,b[0].y,b[0].z,b[0].vx,b[0].vy,b[0].vz
         bt = b[msk]
         rx,ry,rz,vx,vy,vz = bt.x-xs,bt.y-ys,bt.z-zs,bt.vx-vxs,bt.vy-vys,bt.vz-vzs
@@ -152,11 +150,10 @@ def accRad(b):
         etadivQ = bt.eta/bt.Q
         radacc = Ap*S*bt.Q/clight/bt.m*(1+etadivQ*uswind/clight-(1+etadivQ)*(vx*rx+vy*ry+vz*rz)/rr/clight)
         pracc = -Ap*S*bt.Q/clight**2/bt.m*(1+etadivQ)
-        # Instead of putting into b, put into a new array, say acc_rad
-        b.ax[msk] += radacc*rx/rr + pracc*vx
-        b.ay[msk] += radacc*ry/rr + pracc*vy
-        b.az[msk] += radacc*rz/rr + pracc*vz
-    return b.ax, b.ay, b.az
+        acc_rad[msk, 0] = radacc * rx / rr + pracc * vx # x-component
+        acc_rad[msk, 1] = radacc * ry / rr + pracc * vy # y-component
+        acc_rad[msk, 2] = radacc * rz / rr + pracc * vz # z-component
+    return acc_rad[:, 0], acc_rad[:, 1], acc_rad[:, 2]
 
 def getPosition(b):
     n_bodies = len(b)
@@ -194,14 +191,14 @@ def ode(t, y, b):
     vel = getVelocity(b)
     
     grav_x, grav_y, grav_z = accGrav(b)
-    # mag_x, mag_y, mag_z = accMag(b)
-    # rad_x, rad_y, rad_z = accRad(b)
+    mag_x, mag_y, mag_z = accMag(b, year/2)
+    rad_x, rad_y, rad_z = accRad(b)
     
     acc_grav = np.column_stack([grav_x, grav_y, grav_z])
-    # acc_mag = np.column_stack([mag_x, mag_y, mag_z]) 
-    # acc_rad = np.column_stack([rad_x, rad_y, rad_z])
+    acc_mag = np.column_stack([mag_x, mag_y, mag_z]) 
+    acc_rad = np.column_stack([rad_x, rad_y, rad_z])
     
-    acc = acc_grav # + acc_mag + acc_rad
+    acc = acc_grav + acc_mag + acc_rad
     
     dydt = np.concatenate([vel.flatten(), acc.flatten()])
     
