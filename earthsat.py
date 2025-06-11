@@ -57,12 +57,12 @@ if __name__ == '__main__':
     fil = 'solarsystem.csv'
     dfsolsys = pd.read_csv(fil)
 
-    nbodies = 3 # sun-earth-moon only
+    nbodies = 2 # sun-earth-moon only
     sun = dfsolsys.iloc[0]
     earth = dfsolsys.iloc[3]
     moon = dfsolsys.iloc[4]
     # ugh, best to look at the csv file...sorry
-    ndust = 0
+    ndust = 1
 
     # set up planet info in an array "b" w/elemets of type bodyt
     # bodyt definesmembers m,r,x,y,z,vx,vy,vz and more! *** units are cgs!!!!! ***
@@ -93,9 +93,10 @@ if __name__ == '__main__':
     mmo = nb.earth_magnetic_moment(tnowjd*day)
     print(f'mag north rel tilt: {np.arccos(np.dot(bfeq[2],nb.unitvec(mmo)))/degree:1.5} deg')
     
+    '''
     mytest = True
     #mytest = False
-    '''
+
     if mytest:
         # test how well we conserve energy....
         trun = 1*year
@@ -108,8 +109,8 @@ if __name__ == '__main__':
         print('\n-- late spring sunset in SLC! --')
         print('UTC, lat, long:',pd.to_datetime(tnewjd,unit='D',origin='julian'),lat,lon,'degrees')
         test_local_frame(tnewjd,lat,lon, tnewjd*day,b,tnowjd*day,teqxjd*day,bfeq,pspin)
-    
-    
+    '''
+
     # now set up a tracer particle, orbiting earth around equatorial plane + random motion
     if ndust:
         planet = b[1]
@@ -128,7 +129,7 @@ if __name__ == '__main__':
         vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ey
         b[dustidx:].x  += pos[:,0]; b[dustidx:].y  += pos[:,1]; b[dustidx:].z  += pos[:,2] 
         b[dustidx:].vx += vel[:,0]; b[dustidx:].vy += vel[:,1]; b[dustidx:].vz += vel[:,2] 
-    
+
     # --- all done set up! --- prelim check: orb els of earth...
     a,e,i = nb.orbels(b[1],b[0])
     print('earth orb els:',a/AU,'AU;',e,i*180/np.pi,'deg')
@@ -136,6 +137,7 @@ if __name__ == '__main__':
     a,e,i = nb.orbels(b[2],b[1],ez=bfeq[2])
     print('moon orb els:',a/Rearth,'AU;',e,i*180/np.pi,'deg')
 
+    '''
     # get ready to integrate, define num of timesteps, substeps .....
     P = 2*np.pi*r/v # dynamical time, or use orbital period...
     trun, nt = 27*day, 250
@@ -157,7 +159,7 @@ if __name__ == '__main__':
     framedat = np.array(framedat)
     '''
     # --- done!!! --- #
-    t_eval = np.linspace(0,0.95*year,500)
+    t_eval = np.linspace(0,1*year,500)
     
     res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-4, t_eval=t_eval)
     
@@ -170,16 +172,16 @@ if __name__ == '__main__':
     xm = res.y[6,:]
     ym = res.y[7,:]
     zm = res.y[8,:]
-    #xp = res.y[9,:]
-    #yp = res.y[10,:]
-    #zp = res.y[11,:]
+    xp = res.y[9,:]
+    yp = res.y[10,:]
+    zp = res.y[11,:]
     
     pl.clf()
     pl.plot(xs,ys, '.k', color='green')
     pl.plot(xe,ye, '.k', color='blue')
     pl.plot(xm,ym, ':', color='red', linewidth=4)
-    #pl.plot(xp,yp, ':', color='pink', linewidth=2)
-    # pl.plot(res.t,xe,'.k')
+    pl.plot(xp,yp, ':', color='pink', linewidth=2)
+    #pl.plot(res.t,xe,'.k')
     pl.show()
     
     exit()
