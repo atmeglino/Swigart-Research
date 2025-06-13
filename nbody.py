@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.spatial.transform import Rotation as Ro
+import earthsat as es
 
 from constants import *
 
@@ -191,7 +192,7 @@ def ode(t, y, b):
     vel = getVelocity(b)
     
     grav_x, grav_y, grav_z = accGrav(b)
-    mag_x, mag_y, mag_z = accMag(b, year/2)
+    mag_x, mag_y, mag_z = accMag(b, t)
     rad_x, rad_y, rad_z = accRad(b)
     
     acc_grav = np.column_stack([grav_x, grav_y, grav_z])

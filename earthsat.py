@@ -57,7 +57,7 @@ if __name__ == '__main__':
     fil = 'solarsystem.csv'
     dfsolsys = pd.read_csv(fil)
 
-    nbodies = 2 # sun-earth-moon only
+    nbodies = 3 # sun-earth-moon only
     sun = dfsolsys.iloc[0]
     earth = dfsolsys.iloc[3]
     moon = dfsolsys.iloc[4]
@@ -77,20 +77,21 @@ if __name__ == '__main__':
     print(' ' )
     
     tnowjd = sun.jd
-    teqxjd = TmarchequinoxEarth2025JD # this must be a march equinox in julian daya
+    teqxjd = TmarchequinoxEarth2025JD # this must be a march equinox in julian days
     tilt,pspin,porbit = tiltEarth,PspinEarth,PorbitEarth
     print('this epoch UTC:',pd.to_datetime(tnowjd,unit='D',origin='julian'))
     print(teqxjd)
     print('Earth frame reference date:',pd.to_datetime(teqxjd,unit='D',origin='julian'))
+    tstart = tnowjd*day
     
     # bfeq = nb.bodyframe_equinox(tilt,orbinfo=(b,0,1,(teqxjd-tnowjd)*day)) # use this for mars
-    bfeq = nb.bodyframe_earth(b,0,1,tnowjd*day,teqxjd*day,tilt,pspin) 
+    bfeq = nb.bodyframe_earth(b,0,1,tstart,teqxjd*day,tilt,pspin) 
 
     # here set up the Earth's magnetic field. not sure how to do this in a good way
     # so let's do it. in nbody.py there is a space to calc earth mag mo, just spagetti code it in
     # nb.magmoearthlalo = (90,0)
-    nb.earth_magnetic_moment_init(b,tnowjd*day,si=0,ei=1)
-    mmo = nb.earth_magnetic_moment(tnowjd*day)
+    nb.earth_magnetic_moment_init(b,tstart,si=0,ei=1)
+    mmo = nb.earth_magnetic_moment(tstart)
     print(f'mag north rel tilt: {np.arccos(np.dot(bfeq[2],nb.unitvec(mmo)))/degree:1.5} deg')
     
     '''
@@ -101,14 +102,14 @@ if __name__ == '__main__':
         # test how well we conserve energy....
         trun = 1*year
         print('\n-- energy conservation test --')
-        #test_integration_error(b,tnowjd*day,trun)
+        #test_integration_error(b,tstart,trun)
 
         # resolving a reference frame on Earth
         lat,lon = 40.7606,-111.8881 # N,W => < 0, for slc
         tnewjd = 2460834.6236111 # 2025-06-08 02:57:59.999041536 sunset in SLC
         print('\n-- late spring sunset in SLC! --')
         print('UTC, lat, long:',pd.to_datetime(tnewjd,unit='D',origin='julian'),lat,lon,'degrees')
-        test_local_frame(tnewjd,lat,lon, tnewjd*day,b,tnowjd*day,teqxjd*day,bfeq,pspin)
+        test_local_frame(tnewjd,lat,lon, tnewjd*day,b,tstart,teqxjd*day,bfeq,pspin)
     '''
 
     # now set up a tracer particle, orbiting earth around equatorial plane + random motion
@@ -121,7 +122,7 @@ if __name__ == '__main__':
         b[dustidx:].m = 4*np.pi/3*rho*b[dustidx:].r**3
         b[dustidx:].x, b[dustidx:].y, b[dustidx:].z  = planet.x, planet.y, planet.z
         b[dustidx:].vx,b[dustidx:].vy,b[dustidx:].vz = planet.vx,planet.vy,planet.vz
-        ex,ey,ez = nb.bodyframe(tnowjd*day,teqxjd*day,bfeq,pspin)
+        ex,ey,ez = nb.bodyframe(tstart,teqxjd*day,bfeq,pspin)
         r = 15*planet.r
         v = np.sqrt(GNewt*planet.m/r)
         phi = np.random.uniform(0,2*np.pi,ndust)[:,np.newaxis] # new axis to spread around 3d coord variables
@@ -159,7 +160,7 @@ if __name__ == '__main__':
     framedat = np.array(framedat)
     '''
     # --- done!!! --- #
-    t_eval = np.linspace(0,1*year,500)
+    t_eval = tstart + np.linspace(0, 0.25*year, 500)
     
     res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-6, t_eval=t_eval)
     
