@@ -84,6 +84,22 @@ if __name__ == '__main__':
     print('Earth frame reference date:',pd.to_datetime(teqxjd,unit='D',origin='julian'))
     tstart = tnowjd*day
     
+    '''
+    Make sure this stuff is incorporated properly!!!
+    
+    tnowjd = sun.jd
+    teqxjd = TmarchequinoxEarth2025JD # must be march equinox in julian daya                                     
+    print('this epoch UTC:', pd.to_datetime(tnowjd,unit='D',origin='julian'))
+    print('Earth frame reference date:', pd.to_datetime(teqxjd,unit='D',origin='julian'))
+    bfeq = nb.earth_spin_init(b,tnowjd*day,0,1)
+    pspin = PspinEarth
+    
+    # here set up the Earth's magnetic field. This is hack…
+    nb.earth_magnetic_moment_init(b,tnowjd*day,si=0,ei=1)
+    mmo = nb.earth_magnetic_moment(tnowjd*day)
+    print(f'mag north rel tilt: {np.arccos(np.dot(bfeq[2],nb.unitvec(mmo)))/degree:1.5} deg')
+    '''
+    
     # bfeq = nb.bodyframe_equinox(tilt,orbinfo=(b,0,1,(teqxjd-tnowjd)*day)) # use this for mars
     bfeq = nb.bodyframe_earth(b,0,1,tstart,teqxjd*day,tilt,pspin) 
 
@@ -160,7 +176,7 @@ if __name__ == '__main__':
     framedat = np.array(framedat)
     '''
     # --- done!!! --- #
-    t_eval = tstart + np.linspace(0, 0.25*year, 500)
+    t_eval = tstart + np.linspace(0, 0.95*year, 500)
     
     res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-6, t_eval=t_eval)
     

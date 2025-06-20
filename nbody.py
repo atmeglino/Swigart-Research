@@ -36,13 +36,24 @@ earthindex = 1
 magmoearthunitref = []
 magmoearthlalo = Magmoearthlalo # so we can modify this from the calling routine...
 
-def earth_magnetic_moment_init(b,tnow,si=sunindex,ei=earthindex):
+def earth_spin_init(b,tnow,si=sunindex,ei=earthindex):
     global bfearthref,tearthref,sunindex,earthindex,magmoearthunitref
+    global J2tildeEarth
     sunindex,earthindex=si,ei
-    tearthref = TmarchequinoxEarth2025JD * day # this must be a march equinox
-    msk = b.m > 1e20 # use only massive bodies here...
-    bfearthref = bodyframe_earth(b[msk],si,ei,tnow,tearthref,tiltEarth,PspinEarth) 
-    magmoearthunitref,_,_ = localframelalo(*magmoearthlalo,tearthref,tearthref,bfearthref,PspinEarth) 
+    tearthref = TmarchequinoxEarth2025JD * day # this must be a march equinox                                           
+    msk = b.m > 1e20 # use only massive bodies here...                                                                  
+    J2tildesave,J2tildeEarth = J2tildeEarth,0 # ack! we need spin to do J2 on moon, but don't have it (yet)             
+    # so turn J2 off for now..                                                                                          
+    bfearthref = bodyframe_earth(b[msk],si,ei,tnow,tearthref,tiltEarth,PspinEarth)
+    J2tildeEarth = J2tildesave # now turn it back on and iterate once again...                                          
+    bfearthref = bodyframe_earth(b[msk],si,ei,tnow,tearthref,tiltEarth,PspinEarth) # it seems to make very little diff  
+    return bfearthref.copy()
+
+def earth_magnetic_moment_init(b,tnow,si=sunindex,ei=earthindex):
+    global bfearthref,tearthref,sunindex,earthindex,magmoearthunitref,magmoearthlalo
+    sunindex,earthindex=si,ei
+    earth_spin_init(b,tnow,si=si,ei=ei)
+    magmoearthunitref,_,_ = localframelalo(*magmoearthlalo,tearthref,tearthref,bfearthref,PspinEarth)
     return
     
 def earth_magnetic_moment(t):
@@ -53,6 +64,10 @@ def earth_magnetic_moment(t):
     rspin = Ro.from_quat([rotv[0],rotv[1],rotv[2],np.cos(om*t/2)]) # rotate to now
     mmu = Magmoearth *  rspin.apply(magmoearthunitref)
     return mmu
+
+def earth_spin(t): # t just in case, down the road....                                                                  
+    global bfearthref
+    return bfearthref[2]
 
 def acc(b,t,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitating mass.
     global Lsun,GNewt,uswind
@@ -80,6 +95,17 @@ def acc(b,t,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitating
             rvec,vvec = np.array([rx,ry,rz]).T,np.array([vx,vy,vz]).T
             B =  Bfield(rvec/meter,mmo)
             a = (bt.q/(bt.m/kg))[:,np.newaxis] * np.cross(vvec,B) # m/s^2 the meters cancel out
+            b.ax[msk] += a[:,0]
+            b.ay[msk] += a[:,1]
+            b.az[msk] += a[:,2]
+        if J2tildeEarth != 0:
+            xe,ye,ze = b[1].x,b[1].y,b[1].z
+            msk = b.m < 0.05*b[1].m # just the small stuff, incl. moon. should really limit by distance not mass!       
+            bt = b[msk]
+            rx,ry,rz = bt.x-xe,bt.y-ye,bt.z-ze
+            rvec = np.array([rx,ry,rz]).T
+            J2 = J2tildeEarth * GNewt * Mearth * Rearth**2
+            a = gravJ2(rvec,J2,earth_spin(t))
             b.ax[msk] += a[:,0]
             b.ay[msk] += a[:,1]
             b.az[msk] += a[:,2]
@@ -117,6 +143,24 @@ def accGrav(b,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitati
     acc_grav[:,1] = np.sum(-Gm * bdy / r3, axis=1) # y-component
     acc_grav[:,2] = np.sum(-Gm * bdz / r3, axis=1) # z-component
     return acc_grav[:, 0], acc_grav[:, 1], acc_grav[:, 2]
+
+def gravJ2(r,J2,spinaxisplanet):  # returns accel given 3d pos r and physical J2 & spin vector (not J2tilde!)           
+    ez = unitvec(spinaxisplanet)
+    if r.ndim==1:
+        r7 = np.linalg.norm(r)**7
+        z = np.dot(r,ez)
+        zvec = z*ez
+        rp = r - zvec
+        rp2 = np.linalg.norm(rp)**2
+    else:
+        r7 = np.linalg.norm(r,axis=1)[:,np.newaxis]**7
+        z = np.dot(r,ez)[:,np.newaxis]
+        zvec = z * ez
+        rp = r - zvec
+        rp2 = np.linalg.norm(r,axis=1)[:,np.newaxis]**2
+    z2 = z**2
+    aJ2 = (J2/r7) * ((6*z2 - 1.5*rp2) * rp + (3*z2 - 4.5*rp2) * zvec)
+    return aJ2
 
 def accMag(b, t):
     acc_mag = np.zeros((len(b), 3))
