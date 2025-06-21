@@ -152,12 +152,12 @@ if __name__ == '__main__':
         b[dustidx:].x  += pos[:,0]
         b[dustidx:].y  += pos[:,1]
         b[dustidx:].z  += pos[:,2] 
-        b[dustidx:].vx += vel[:,0]
-        b[dustidx:].vy += vel[:,1]
-        b[dustidx:].vz += vel[:,2]
-        # b[dustidx:].vx = planet.vx # dust velocity matches earth velocity relative to sun
-        # b[dustidx:].vy = planet.vy
-        # b[dustidx:].vz = planet.vz
+        # b[dustidx:].vx += vel[:,0]
+        # b[dustidx:].vy += vel[:,1]
+        # b[dustidx:].vz += vel[:,2]
+        b[dustidx:].vx = planet.vx + vel[:,0] # dust velocity matches earth velocity relative to sun
+        b[dustidx:].vy = planet.vy + vel[:,1]
+        b[dustidx:].vz = planet.vz + vel[:,2]
 
 
     # --- all done set up! --- prelim check: orb els of earth...
