@@ -133,14 +133,15 @@ if __name__ == '__main__':
     if ndust:
         planet = b[1]
         dustidx = nbodies # tracer in
-        rho,rphys = 2.0,1.0*micron
+        rho,rphys = 2.0,10.0*micron
         b[dustidx:].r = rphys
-        b[dustidx:].q = 1e-12 # Coulombs
+        # b[dustidx:].q = 1e-12 # Coulombs
+        b[dustidx:].q = 0
         b[dustidx:].m = 4*np.pi/3*rho*b[dustidx:].r**3
         b[dustidx:].x, b[dustidx:].y, b[dustidx:].z  = planet.x, planet.y, planet.z
         b[dustidx:].vx,b[dustidx:].vy,b[dustidx:].vz = planet.vx,planet.vy,planet.vz
         ex,ey,ez = nb.bodyframe(tstart,teqxjd*day,bfeq,pspin)
-        r = 15*planet.r
+        r = 3*planet.r
         v = np.sqrt(GNewt*planet.m/r)
         # phi = np.random.uniform(0,2*np.pi,ndust)[:,np.newaxis] # new axis to spread around 3d coord variables
         phi = phi = np.full((ndust, 1), np.pi/2) # for polar orbit starting above north pole
@@ -148,8 +149,16 @@ if __name__ == '__main__':
         # vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ey # for equitorial orbit
         pos =  r*np.cos(phi)*ex + r*np.sin(phi)*ez # for polar orbit
         vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ez # for polar orbit
-        b[dustidx:].x  += pos[:,0]; b[dustidx:].y  += pos[:,1]; b[dustidx:].z  += pos[:,2] 
-        b[dustidx:].vx += vel[:,0]; b[dustidx:].vy += vel[:,1]; b[dustidx:].vz += vel[:,2] 
+        b[dustidx:].x  += pos[:,0]
+        b[dustidx:].y  += pos[:,1]
+        b[dustidx:].z  += pos[:,2] 
+        # b[dustidx:].vx += vel[:,0]
+        # b[dustidx:].vy += vel[:,1]
+        # b[dustidx:].vz += vel[:,2]
+        b[dustidx:].vx = planet.vx # dust velocity matches earth velocity relative to sun
+        b[dustidx:].vy = planet.vy
+        b[dustidx:].vz = planet.vz
+
 
     # --- all done set up! --- prelim check: orb els of earth...
     a,e,i = nb.orbels(b[1],b[0])
@@ -180,7 +189,7 @@ if __name__ == '__main__':
     framedat = np.array(framedat)
     '''
     # --- done!!! --- #
-    t_eval = tstart + np.linspace(0, 0.95*year, 500)
+    t_eval = tstart + np.linspace(0, 1.0*year, 500)
     
     res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-6, t_eval=t_eval)
     
