@@ -152,12 +152,12 @@ if __name__ == '__main__':
         b[dustidx:].x  += pos[:,0]
         b[dustidx:].y  += pos[:,1]
         b[dustidx:].z  += pos[:,2] 
-        # b[dustidx:].vx += vel[:,0]
-        # b[dustidx:].vy += vel[:,1]
-        # b[dustidx:].vz += vel[:,2]
-        b[dustidx:].vx = planet.vx # dust velocity matches earth velocity relative to sun
-        b[dustidx:].vy = planet.vy
-        b[dustidx:].vz = planet.vz
+        b[dustidx:].vx += vel[:,0]
+        b[dustidx:].vy += vel[:,1]
+        b[dustidx:].vz += vel[:,2]
+        # b[dustidx:].vx = planet.vx # dust velocity matches earth velocity relative to sun
+        # b[dustidx:].vy = planet.vy
+        # b[dustidx:].vz = planet.vz
 
 
     # --- all done set up! --- prelim check: orb els of earth...
@@ -218,6 +218,9 @@ if __name__ == '__main__':
     pl.plot(xm-xe,ym-ye,'.m', color='red')
     pl.plot(xp-xe,yp-ye,'.:', color='pink')
     pl.show()
+    
+    for xi, yi, zi in zip(xp[::10], yp[::10], zp[::10]):
+        print(f"{xi:.6e} {yi:.6e} {zi:.6e}")
     
     exit()
     
