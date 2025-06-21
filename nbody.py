@@ -34,7 +34,7 @@ tearthref = 0.0
 sunindex = 0
 earthindex = 1
 magmoearthunitref = []
-magmoearthlalo = Magmoearthlalo # so we can modify this from the calling routine...
+magmoearthlalo = MagmoEarthlalo # so we can modify this from the calling routine...
 
 def earth_spin_init(b,tnow,si=sunindex,ei=earthindex):
     global bfearthref,tearthref,sunindex,earthindex,magmoearthunitref
@@ -62,7 +62,7 @@ def earth_magnetic_moment(t):
     # rotate about spin axis
     rotv = unitvec(bfearthref[2])*np.sin(om*t/2)
     rspin = Ro.from_quat([rotv[0],rotv[1],rotv[2],np.cos(om*t/2)]) # rotate to now
-    mmu = Magmoearth *  rspin.apply(magmoearthunitref)
+    mmu = MagmoEarth *  rspin.apply(magmoearthunitref)
     return mmu
 
 def earth_spin(t): # t just in case, down the road....                                                                  
@@ -253,7 +253,7 @@ def ode(t, y, b):
         b[i].vx, b[i].vy, b[i].vz = y[3*n_bodies + 3*i:3*n_bodies + 3*i+3]
     
     vel = getVelocity(b)
-    acc = np.column_stack(accTotal(b,t))
+    acc = np.column_stack(accTotal(b,t,include_mag=False,include_rad=False))
     dydt = np.concatenate([vel.flatten(), acc.flatten()])
     
     return dydt

@@ -76,6 +76,9 @@ if __name__ == '__main__':
     [print(f'{x:1.13e},',end=' ') for x in a]
     print(' ' )
     
+    '''
+    Old stuff:
+    
     tnowjd = sun.jd
     teqxjd = TmarchequinoxEarth2025JD # this must be a march equinox in julian days
     tilt,pspin,porbit = tiltEarth,PspinEarth,PorbitEarth
@@ -83,9 +86,7 @@ if __name__ == '__main__':
     print(teqxjd)
     print('Earth frame reference date:',pd.to_datetime(teqxjd,unit='D',origin='julian'))
     tstart = tnowjd*day
-    
     '''
-    Make sure this stuff is incorporated properly!!!
     
     tnowjd = sun.jd
     teqxjd = TmarchequinoxEarth2025JD # must be march equinox in julian daya                                     
@@ -93,15 +94,15 @@ if __name__ == '__main__':
     print('Earth frame reference date:', pd.to_datetime(teqxjd,unit='D',origin='julian'))
     bfeq = nb.earth_spin_init(b,tnowjd*day,0,1)
     pspin = PspinEarth
+    tstart = tnowjd*day
     
     # here set up the Earth's magnetic field. This is hack…
     nb.earth_magnetic_moment_init(b,tnowjd*day,si=0,ei=1)
     mmo = nb.earth_magnetic_moment(tnowjd*day)
     print(f'mag north rel tilt: {np.arccos(np.dot(bfeq[2],nb.unitvec(mmo)))/degree:1.5} deg')
-    '''
     
     # bfeq = nb.bodyframe_equinox(tilt,orbinfo=(b,0,1,(teqxjd-tnowjd)*day)) # use this for mars
-    bfeq = nb.bodyframe_earth(b,0,1,tstart,teqxjd*day,tilt,pspin) 
+    # bfeq = nb.bodyframe_earth(b,0,1,tstart,teqxjd*day,tilt,pspin) 
 
     # here set up the Earth's magnetic field. not sure how to do this in a good way
     # so let's do it. in nbody.py there is a space to calc earth mag mo, just spagetti code it in
@@ -141,9 +142,12 @@ if __name__ == '__main__':
         ex,ey,ez = nb.bodyframe(tstart,teqxjd*day,bfeq,pspin)
         r = 15*planet.r
         v = np.sqrt(GNewt*planet.m/r)
-        phi = np.random.uniform(0,2*np.pi,ndust)[:,np.newaxis] # new axis to spread around 3d coord variables
-        pos =  r*np.cos(phi)*ex + r*np.sin(phi)*ey
-        vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ey
+        # phi = np.random.uniform(0,2*np.pi,ndust)[:,np.newaxis] # new axis to spread around 3d coord variables
+        phi = phi = np.full((ndust, 1), np.pi/2) # for polar orbit starting above north pole
+        # pos =  r*np.cos(phi)*ex + r*np.sin(phi)*ey # for equitorial orbit
+        # vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ey # for equitorial orbit
+        pos =  r*np.cos(phi)*ex + r*np.sin(phi)*ez # for polar orbit
+        vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ez # for polar orbit
         b[dustidx:].x  += pos[:,0]; b[dustidx:].y  += pos[:,1]; b[dustidx:].z  += pos[:,2] 
         b[dustidx:].vx += vel[:,0]; b[dustidx:].vy += vel[:,1]; b[dustidx:].vz += vel[:,2] 
 

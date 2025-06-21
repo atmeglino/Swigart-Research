@@ -1,4 +1,3 @@
-
 from numpy import pi
 
 # cgs...
@@ -14,28 +13,31 @@ year = yr
 
 degree = 3.1415926535897932385/180
 
+Rearth = 637800000.0
+REarth = Rearth
+Mearth = 5.972168398723462e+27
+Mearth = 5.9724100046898e+27 # from JPL Horizons on 2024/12/22
+MEarth = Mearth
 PspinEarth = 23.9344695944*hour # from JPL Horizons
 PorbitEarth = 365.25636*day # orbital period
 tiltEarth = 23.4392911*degree # radians
 TjunesolsticeEarth2025JD = 2460846.61251; # where did i get this?
 TmarchequinoxEarth2025JD = 2460754.8756944 # print(2460754.8756944 + 3*hour/day)
-
+# J2tildeEarth = 0.108263e-2
+J2tildeEarth = 0
+MagmoEarth = 7.94e22 # A m^2
+MagmoEarthlalo = (85.762,139.298) # lat, lon in degrees of magnetic north
 
 AU =  1.495978707e13
 pc = 3.8057e18
 Rsun = 69570000000.0
 Rsolar = Rsun
-Rearth = 637800000.0
-Mearth = 5.972168398723462e+27
-Mearth = 5.9724100046898e+27 # from JPL Horizons on 2024/12/22
 Msun = 1.9884098709818164e+33
 Msun = 1.9884903130783e+33 # from JPL Horizons on 2024/12/22
 Msolar = Msun
 Lsun = 3.826e33
 Lsolar = Lsun
 Tsun = 5800.0
-Magmoearth = 7.94e22 # A m^2
-Magmoearthlalo = (85.762,139.298) # lat, lon in degrees of magnetic north
 
 clight = 2.99792458e10 
 uswind = 450e5
@@ -58,4 +60,3 @@ rhoolivine =  2.7; nolivine = 1.7 - 1.0e-3j
 
 # gold spheres
 rhogold = 19.3; ngold = 0.27 - 2.9j
-
