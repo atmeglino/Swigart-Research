@@ -1,6 +1,8 @@
 # example code.
+
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 import pylab as pl
 import nbody as nb
 from constants import *
@@ -222,7 +224,7 @@ if __name__ == '__main__':
     for xi, yi, zi in zip(xp[::10], yp[::10], zp[::10]):
         print(f"{xi:.6e} {yi:.6e} {zi:.6e}")
     
-    exit()
+    quit()
     
     # dump out a plot of results
     out = ''
