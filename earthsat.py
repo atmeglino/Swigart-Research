@@ -141,7 +141,7 @@ if __name__ == '__main__':
         b[dustidx:].x, b[dustidx:].y, b[dustidx:].z  = planet.x, planet.y, planet.z
         b[dustidx:].vx,b[dustidx:].vy,b[dustidx:].vz = planet.vx,planet.vy,planet.vz
         ex,ey,ez = nb.bodyframe(tstart,teqxjd*day,bfeq,pspin)
-        r = 3*planet.r
+        r = 5*planet.r
         v = np.sqrt(GNewt*planet.m/r)
         # phi = np.random.uniform(0,2*np.pi,ndust)[:,np.newaxis] # new axis to spread around 3d coord variables
         phi = phi = np.full((ndust, 1), np.pi/2) # for polar orbit starting above north pole
@@ -215,8 +215,8 @@ if __name__ == '__main__':
     #pl.plot(res.t,xe,'.k')
     
     # Plot below to see moon and particle relative to earth (?)
-    pl.plot(xm-xe,ym-ye,'.m', color='red')
-    pl.plot(xp-xe,yp-ye,'.:', color='pink')
+    # pl.plot(xm-xe,ym-ye,'.m', color='red')
+    pl.plot(xp-xe,yp-ye,'.m', color='pink')
     pl.show()
     
     for xi, yi, zi in zip(xp[::10], yp[::10], zp[::10]):

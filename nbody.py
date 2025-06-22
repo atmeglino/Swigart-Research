@@ -121,6 +121,15 @@ def acc(b,t,soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitating
   
 def accGrav(b, t, soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravitating mass.
     acc_grav = np.zeros((len(b), 3))
+    bm = b[b.m>mthresh] # gravity
+    bdx = np.repeat(b.x[:,np.newaxis],len(bm),1)-np.repeat(bm.x[np.newaxis,:],len(b),0)
+    bdy = np.repeat(b.y[:,np.newaxis],len(bm),1)-np.repeat(bm.y[np.newaxis,:],len(b),0)
+    bdz = np.repeat(b.z[:,np.newaxis],len(bm),1)-np.repeat(bm.z[np.newaxis,:],len(b),0)
+    r3 = (bdx**2+bdy**2+bdz**2+soft**2)**(3/2)
+    Gm = GNewt*np.repeat(bm.m[np.newaxis,:],len(b),0)
+    acc_grav[:,0] = np.sum(-Gm * bdx / r3, axis=1) # x-component
+    acc_grav[:,1] = np.sum(-Gm * bdy / r3, axis=1) # y-component
+    acc_grav[:,2] = np.sum(-Gm * bdz / r3, axis=1) # z-component
     if J2tildeEarth != 0:
         xe,ye,ze = b[1].x,b[1].y,b[1].z
         msk = b.m < 0.05*b[1].m # just the small stuff, incl. moon. should really limit by distance not mass!       
@@ -128,20 +137,10 @@ def accGrav(b, t, soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravi
         rx,ry,rz = bt.x-xe,bt.y-ye,bt.z-ze
         rvec = np.array([rx,ry,rz]).T
         J2 = J2tildeEarth * GNewt * Mearth * Rearth**2
-        a = gravJ2(rvec,J2,earth_spin(t))
-        acc_grav[msk,0] = a[:,0] # x-component
-        acc_grav[msk,1] = a[:,1] # y-component
-        acc_grav[msk,2] = a[:,2] # z-component
-    else:
-        bm = b[b.m>mthresh] # gravity
-        bdx = np.repeat(b.x[:,np.newaxis],len(bm),1)-np.repeat(bm.x[np.newaxis,:],len(b),0)
-        bdy = np.repeat(b.y[:,np.newaxis],len(bm),1)-np.repeat(bm.y[np.newaxis,:],len(b),0)
-        bdz = np.repeat(b.z[:,np.newaxis],len(bm),1)-np.repeat(bm.z[np.newaxis,:],len(b),0)
-        r3 = (bdx**2+bdy**2+bdz**2+soft**2)**(3/2)
-        Gm = GNewt*np.repeat(bm.m[np.newaxis,:],len(b),0)
-        acc_grav[:,0] = np.sum(-Gm * bdx / r3, axis=1) # x-component
-        acc_grav[:,1] = np.sum(-Gm * bdy / r3, axis=1) # y-component
-        acc_grav[:,2] = np.sum(-Gm * bdz / r3, axis=1) # z-component
+        aJ2 = gravJ2(rvec,J2,earth_spin(t))
+        acc_grav[msk,0] += aJ2[:,0] # x-component
+        acc_grav[msk,1] += aJ2[:,1] # y-component
+        acc_grav[msk,2] += aJ2[:,2] # z-component
     return acc_grav[:, 0], acc_grav[:, 1], acc_grav[:, 2]
 
 def gravJ2(r,J2,spinaxisplanet):  # returns accel given 3d pos r and physical J2 & spin vector (not J2tilde!)           
