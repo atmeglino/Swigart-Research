@@ -7,6 +7,8 @@ import pylab as pl
 import nbody as nb
 from constants import *
 from scipy.integrate import solve_ivp
+import matplotlib as mpl
+from matplotlib.collections import LineCollection
 
 
 def printposvel(q):
@@ -143,26 +145,27 @@ if __name__ == '__main__':
         b[dustidx:].x, b[dustidx:].y, b[dustidx:].z  = planet.x, planet.y, planet.z
         b[dustidx:].vx,b[dustidx:].vy,b[dustidx:].vz = planet.vx,planet.vy,planet.vz
         ex,ey,ez = nb.bodyframe(tstart,teqxjd*day,bfeq,pspin)
-        r = 5*planet.r
+        r = 3*planet.r
         v = np.sqrt(GNewt*planet.m/r)
         # phi = np.random.uniform(0,2*np.pi,ndust)[:,np.newaxis] # new axis to spread around 3d coord variables
-        phi = np.full((ndust, 1), np.pi/2) # for polar orbit starting above north pole
+        phi = np.pi/2 # for polar orbit starting above north pole
         # pos =  r*np.cos(phi)*ex + r*np.sin(phi)*ey # for equitorial orbit
         # vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ey # for equitorial orbit
         pos =  r*np.cos(phi)*ex + r*np.sin(phi)*ez # for polar orbit
         # vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ez # for polar orbit
-        earth_vel = np.array([planet.vx, planet.vy, planet.vz])
+        earth_vel = np.array([planet.vx - b[0].vx, planet.vy - b[0].vy, planet.vz - b[0].vz]) # for vel in same dir as earth w/ respect to sun
+        # earth_vel = np.array([planet.vx, planet.vy, planet.vz]) # for vel in same dir as earth w/ respect to barycenter
         earth_vel_direction = earth_vel / np.linalg.norm(earth_vel)
         vel = v * earth_vel_direction
-        b[dustidx:].x  += pos[:,0]
-        b[dustidx:].y  += pos[:,1]
-        b[dustidx:].z  += pos[:,2]
+        b[dustidx:].x += pos[...,0]
+        b[dustidx:].y += pos[...,1]
+        b[dustidx:].z += pos[...,2]
         # b[dustidx:].vx += vel[:,0]
         # b[dustidx:].vy += vel[:,1]
         # b[dustidx:].vz += vel[:,2]
-        b[dustidx:].vx = vel[0] # dust velocity direction matches earth's relative to sun
-        b[dustidx:].vy = vel[1]
-        b[dustidx:].vz = vel[2]
+        b[dustidx:].vx += vel[...,0] # dust velocity direction matches earth's relative to sun
+        b[dustidx:].vy += vel[...,1]
+        b[dustidx:].vz += vel[...,2]
 
 
     # --- all done set up! --- prelim check: orb els of earth...
@@ -215,14 +218,14 @@ if __name__ == '__main__':
     pl.clf()
     # Plot below to see sun, earth, moon system
     #pl.plot(xs,ys, '.k', color='green')
-    pl.plot(xe,ye, '.k', color='blue')
+    #pl.plot(xe,ye, '.k', color='blue')
     #pl.plot(xm,ym, ':', color='red', linewidth=4)
-    pl.plot(xp,yp, ':', color='pink', linewidth=2)
+    #pl.plot(xp,yp, ':', color='pink', linewidth=2)
     #pl.plot(res.t,xe,'.k')
     
     # Plot below to see moon and particle relative to earth (?)
     #pl.plot(xm-xe,ym-ye,'.m', color='red')
-    #pl.plot(xp-xe,yp-ye,'.m', color='pink')
+    pl.plot(xp-xe,yp-ye,'.m', color='pink')
     pl.show()
     pl.savefig('fig.png', dpi=300)
     pl.close()
