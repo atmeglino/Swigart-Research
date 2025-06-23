@@ -23,8 +23,7 @@ PorbitEarth = 365.25636*day # orbital period
 tiltEarth = 23.4392911*degree # radians
 TjunesolsticeEarth2025JD = 2460846.61251; # where did i get this?
 TmarchequinoxEarth2025JD = 2460754.8756944 # print(2460754.8756944 + 3*hour/day)
-# J2tildeEarth = 0.108263e-2
-J2tildeEarth = 0
+J2tildeEarth = 0.108263e-2
 MagmoEarth = 7.94e22 # A m^2
 MagmoEarthlalo = (85.762,139.298) # lat, lon in degrees of magnetic north
 

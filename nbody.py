@@ -522,5 +522,3 @@ def ntimesteps_suggest(trun,tdyn,etol=1e-4):
     if etol <= 1e-12: nsteps *= 2
     if etol <= 1e-13: nsteps *= 5
     return int(nsteps)
-        
-

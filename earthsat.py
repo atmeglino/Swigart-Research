@@ -146,20 +146,23 @@ if __name__ == '__main__':
         r = 5*planet.r
         v = np.sqrt(GNewt*planet.m/r)
         # phi = np.random.uniform(0,2*np.pi,ndust)[:,np.newaxis] # new axis to spread around 3d coord variables
-        phi = phi = np.full((ndust, 1), np.pi/2) # for polar orbit starting above north pole
+        phi = np.full((ndust, 1), np.pi/2) # for polar orbit starting above north pole
         # pos =  r*np.cos(phi)*ex + r*np.sin(phi)*ey # for equitorial orbit
         # vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ey # for equitorial orbit
         pos =  r*np.cos(phi)*ex + r*np.sin(phi)*ez # for polar orbit
-        vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ez # for polar orbit
+        # vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ez # for polar orbit
+        earth_vel = np.array([planet.vx, planet.vy, planet.vz])
+        earth_vel_direction = earth_vel / np.linalg.norm(earth_vel)
+        vel = v * earth_vel_direction
         b[dustidx:].x  += pos[:,0]
         b[dustidx:].y  += pos[:,1]
-        b[dustidx:].z  += pos[:,2] 
+        b[dustidx:].z  += pos[:,2]
         # b[dustidx:].vx += vel[:,0]
         # b[dustidx:].vy += vel[:,1]
         # b[dustidx:].vz += vel[:,2]
-        b[dustidx:].vx = planet.vx + vel[:,0] # dust velocity matches earth velocity relative to sun
-        b[dustidx:].vy = planet.vy + vel[:,1]
-        b[dustidx:].vz = planet.vz + vel[:,2]
+        b[dustidx:].vx = vel[0] # dust velocity direction matches earth's relative to sun
+        b[dustidx:].vy = vel[1]
+        b[dustidx:].vz = vel[2]
 
 
     # --- all done set up! --- prelim check: orb els of earth...
@@ -208,23 +211,26 @@ if __name__ == '__main__':
     yp = res.y[10,:]
     zp = res.y[11,:]
     
+    
     pl.clf()
-    # Plot below to see sun, earth, moon system (doesn't work with particle)
+    # Plot below to see sun, earth, moon system
     #pl.plot(xs,ys, '.k', color='green')
-    #pl.plot(xe,ye, '.k', color='blue')
+    pl.plot(xe,ye, '.k', color='blue')
     #pl.plot(xm,ym, ':', color='red', linewidth=4)
-    #pl.plot(xp,yp, ':', color='pink', linewidth=2)
+    pl.plot(xp,yp, ':', color='pink', linewidth=2)
     #pl.plot(res.t,xe,'.k')
     
     # Plot below to see moon and particle relative to earth (?)
-    # pl.plot(xm-xe,ym-ye,'.m', color='red')
-    pl.plot(xp-xe,yp-ye,'.m', color='pink')
+    #pl.plot(xm-xe,ym-ye,'.m', color='red')
+    #pl.plot(xp-xe,yp-ye,'.m', color='pink')
     pl.show()
+    pl.savefig('fig.png', dpi=300)
+    pl.close()
     
     for xi, yi, zi in zip(xp[::10], yp[::10], zp[::10]):
         print(f"{xi:.6e} {yi:.6e} {zi:.6e}")
     
-    quit()
+    exit()
     
     # dump out a plot of results
     out = ''
