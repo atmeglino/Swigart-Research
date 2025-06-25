@@ -153,8 +153,8 @@ if __name__ == '__main__':
         # vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ey # for equitorial orbit
         pos =  r*np.cos(phi)*ex + r*np.sin(phi)*ez # for polar orbit
         # vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ez # for polar orbit
-        earth_vel = np.array([planet.vx - b[0].vx, planet.vy - b[0].vy, planet.vz - b[0].vz]) # for vel in same dir as earth w/ respect to sun
-        # earth_vel = np.array([planet.vx, planet.vy, planet.vz]) # for vel in same dir as earth w/ respect to barycenter
+        earth_vel = np.array([planet.vx, planet.vy, planet.vz]) # for vel in same dir as earth w/ respect to barycenter
+        # earth_vel = np.array([planet.vx - b[0].vx, planet.vy - b[0].vy, planet.vz - b[0].vz]) # for vel in same dir as earth w/ respect to sun
         earth_vel_direction = earth_vel / np.linalg.norm(earth_vel)
         vel = v * earth_vel_direction
         b[dustidx:].x += pos[...,0]
@@ -214,6 +214,15 @@ if __name__ == '__main__':
     yp = res.y[10,:]
     zp = res.y[11,:]
     
+    print(f'Initial dust position: {xp[0]:.10e} {yp[0]:.10e} {zp[0]:.10e}')
+    print(f'Initial earth position: {xe[0]:.10e} {ye[0]:.10e} {ze[0]:.10e}')
+    ax_j2, ay_j2, az_j2 = nb.accJ2(b, tstart)
+    print(f'J2 acc: {ax_j2[dustidx]:.10e}, {ay_j2[dustidx]:.10e}, {az_j2[dustidx]:.10e}')
+    print(f'Final dust position: {xp[-1]:.10e} {yp[-1]:.10e} {zp[-1]:.10e}')
+    print(f'Final earth position: {xe[-1]:.10e} {ye[-1]:.10e} {ze[-1]:.10e}')
+    
+    #exit()
+    
     
     pl.clf()
     # Plot below to see sun, earth, moon system
@@ -230,8 +239,10 @@ if __name__ == '__main__':
     pl.savefig('fig.png', dpi=300)
     pl.close()
     
+    '''
     for xi, yi, zi in zip(xp[::10], yp[::10], zp[::10]):
         print(f"{xi:.6e} {yi:.6e} {zi:.6e}")
+    '''
     
     exit()
     

@@ -130,18 +130,21 @@ def accGrav(b, t, soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravi
     acc_grav[:,0] = np.sum(-Gm * bdx / r3, axis=1) # x-component
     acc_grav[:,1] = np.sum(-Gm * bdy / r3, axis=1) # y-component
     acc_grav[:,2] = np.sum(-Gm * bdz / r3, axis=1) # z-component
-    if J2tildeEarth != 0:
-        xe,ye,ze = b[1].x,b[1].y,b[1].z
-        msk = b.m < 0.05*b[1].m # just the small stuff, incl. moon. should really limit by distance not mass!       
-        bt = b[msk]
-        rx,ry,rz = bt.x-xe,bt.y-ye,bt.z-ze
-        rvec = np.array([rx,ry,rz]).T
-        J2 = J2tildeEarth * GNewt * Mearth * Rearth**2
-        aJ2 = gravJ2(rvec,J2,earth_spin(t))
-        acc_grav[msk,0] += aJ2[:,0] # x-component
-        acc_grav[msk,1] += aJ2[:,1] # y-component
-        acc_grav[msk,2] += aJ2[:,2] # z-component
     return acc_grav[:, 0], acc_grav[:, 1], acc_grav[:, 2]
+
+def accJ2(b, t):
+    acc_j2 = np.zeros((len(b), 3))
+    xe,ye,ze = b[1].x,b[1].y,b[1].z
+    msk = b.m < 0.05*b[1].m # just the small stuff, incl. moon. should really limit by distance not mass!       
+    bt = b[msk]
+    rx,ry,rz = bt.x-xe,bt.y-ye,bt.z-ze
+    rvec = np.array([rx,ry,rz]).T
+    J2 = J2tildeEarth * GNewt * Mearth * Rearth**2
+    aJ2 = gravJ2(rvec,J2,earth_spin(t))
+    acc_j2[msk,0] += aJ2[:,0] # x-component
+    acc_j2[msk,1] += aJ2[:,1] # y-component
+    acc_j2[msk,2] += aJ2[:,2] # z-component
+    return acc_j2[:, 0], acc_j2[:, 1], acc_j2[:, 2]
 
 def gravJ2(r,J2,spinaxisplanet):  # returns accel given 3d pos r and physical J2 & spin vector (not J2tilde!)           
     ez = unitvec(spinaxisplanet)
@@ -199,13 +202,18 @@ def accRad(b):
         acc_rad[msk, 2] = radacc * rz / rr + pracc * vz # z-component
     return acc_rad[:, 0], acc_rad[:, 1], acc_rad[:, 2]
 
-def accTotal(b,t,include_grav=True,include_mag=True,include_rad=True):
+def accTotal(b,t,include_grav=True,include_j2=True,include_mag=True,include_rad=True):
     acc_total = np.zeros((len(b), 3))
     if include_grav:
         grav_x, grav_y, grav_z = accGrav(b, t)
         acc_total[:, 0] += grav_x
         acc_total[:, 1] += grav_y
         acc_total[:, 2] += grav_z
+    if include_j2:
+        j2_x, j2_y, j2_z = accJ2(b, t)
+        acc_total[:, 0] += j2_x
+        acc_total[:, 1] += j2_y
+        acc_total[:, 2] += j2_z
     if include_mag:
         mag_x, mag_y, mag_z = accMag(b, t)
         acc_total[:, 0] += mag_x
@@ -252,7 +260,7 @@ def ode(t, y, b):
         b[i].vx, b[i].vy, b[i].vz = y[3*n_bodies + 3*i:3*n_bodies + 3*i+3]
     
     vel = getVelocity(b)
-    acc = np.column_stack(accTotal(b,t,include_mag=False,include_rad=False))
+    acc = np.column_stack(accTotal(b,t,include_grav=False,include_mag=False,include_rad=False))
     dydt = np.concatenate([vel.flatten(), acc.flatten()])
     
     return dydt
