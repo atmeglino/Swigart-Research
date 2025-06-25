@@ -196,6 +196,8 @@ if __name__ == '__main__':
         #if i == 2: break
     framedat = np.array(framedat)
     '''
+    
+    
     # --- done!!! --- #
     t_eval = tstart + np.linspace(0, 1.0*year, 500)
     
@@ -214,14 +216,17 @@ if __name__ == '__main__':
     yp = res.y[10,:]
     zp = res.y[11,:]
     
+    
     print(f'Initial dust position: {xp[0]:.10e} {yp[0]:.10e} {zp[0]:.10e}')
     print(f'Initial earth position: {xe[0]:.10e} {ye[0]:.10e} {ze[0]:.10e}')
     ax_j2, ay_j2, az_j2 = nb.accJ2(b, tstart)
+    ax_grav, ay_grav, az_grav = nb.accGrav(b, tstart)
     print(f'J2 acc: {ax_j2[dustidx]:.10e}, {ay_j2[dustidx]:.10e}, {az_j2[dustidx]:.10e}')
+    print(f'Grav acc: {ax_grav[dustidx]:.10e}, {ay_grav[dustidx]:.10e}, {az_grav[dustidx]:.10e}')
     print(f'Final dust position: {xp[-1]:.10e} {yp[-1]:.10e} {zp[-1]:.10e}')
     print(f'Final earth position: {xe[-1]:.10e} {ye[-1]:.10e} {ze[-1]:.10e}')
     
-    #exit()
+    exit()
     
     
     pl.clf()

@@ -260,7 +260,7 @@ def ode(t, y, b):
         b[i].vx, b[i].vy, b[i].vz = y[3*n_bodies + 3*i:3*n_bodies + 3*i+3]
     
     vel = getVelocity(b)
-    acc = np.column_stack(accTotal(b,t,include_grav=False,include_mag=False,include_rad=False))
+    acc = np.column_stack(accTotal(b,t))
     dydt = np.concatenate([vel.flatten(), acc.flatten()])
     
     return dydt
