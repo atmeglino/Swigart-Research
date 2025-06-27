@@ -201,7 +201,7 @@ if __name__ == '__main__':
     # --- done!!! --- #
     t_eval = tstart + np.linspace(0, 1.0*year, 500)
     
-    res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), method="RK23", args=(b,), rtol=5e-13, t_eval=t_eval)
+    res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-6, t_eval=t_eval)
     
     xs = res.y[0,:]
     ys = res.y[1,:]
