@@ -198,10 +198,6 @@ if __name__ == '__main__':
     framedat = np.array(framedat)
     '''
     
-    r3_1, r3_2, r3_3 = nb.accGrav(b, tstart+0.5*year)
-    print(r3_1, r3_2, r3_3)
-    exit()
-    
     
     # --- done!!! --- #
     t_eval = tstart + np.linspace(0, 1.0*year, 500)
@@ -220,6 +216,10 @@ if __name__ == '__main__':
     xp = res.y[9,:]
     yp = res.y[10,:]
     zp = res.y[11,:]
+    
+    x, y, z, r3_1, r3_2, r3_3 = nb.accGrav(b, tstart+0.5*year)
+    print(r3_1, r3_2, r3_3)
+    exit()
     
     '''
     ax_grav, ay_grav, az_grav = nb.accGrav(b, tstart+0.5*year)
