@@ -198,6 +198,10 @@ if __name__ == '__main__':
     framedat = np.array(framedat)
     '''
     
+    r3_1, r3_2, r3_3 = nb.accGrav(b, tstart+0.5*year)
+    print(r3_1, r3_2, r3_3)
+    exit()
+    
     
     # --- done!!! --- #
     t_eval = tstart + np.linspace(0, 1.0*year, 500)
@@ -217,13 +221,11 @@ if __name__ == '__main__':
     yp = res.y[10,:]
     zp = res.y[11,:]
     
+    '''
     ax_grav, ay_grav, az_grav = nb.accGrav(b, tstart+0.5*year)
     print(f'Grav acc: {ax_grav[dustidx]:.10e}, {ay_grav[dustidx]:.10e}, {az_grav[dustidx]:.10e}')
     exit()
-    
-    grav = nb.accGrav(b, tstart+0.5*year)
-    print(grav)
-    exit()
+    '''
     
     print(f'Initial dust position: {xp[0]:.10e} {yp[0]:.10e} {zp[0]:.10e}')
     print(f'Initial earth position: {xe[0]:.10e} {ye[0]:.10e} {ze[0]:.10e}')

@@ -152,8 +152,8 @@ def accGrav(b, t, soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravi
     
     return acc_grav[:, 0], acc_grav[:, 1], acc_grav[:, 2]
     '''
-    return acc_grav[:, 0], acc_grav[:, 1], acc_grav[:, 2]
-    # return r_cube[:, 0], r_cube[:, 1], r_cube[:, 2]
+    # return acc_grav[:, 0], acc_grav[:, 1], acc_grav[:, 2]
+    return r_cube[:, 0], r_cube[:, 1], r_cube[:, 2]
 
 def accJ2(b, t):
     n_bodies = len(b)
@@ -397,7 +397,7 @@ def ode(t, y, b):
     b.x, b.y, b.z = pos.T
     b.vx, b.vy, b.vz = vel.T
     
-    acc_x, acc_y, acc_z = accTotal(b, t)
+    acc_x, acc_y, acc_z = accTotal(b, t, include_j2=False, include_mag=False, include_rad=False)
     acc = np.column_stack([acc_x, acc_y, acc_z])
     
     dydt = np.concatenate([vel.flatten(), acc.flatten()])
