@@ -396,7 +396,7 @@ def ode(t, y, b):
     b.x, b.y, b.z = pos.T
     b.vx, b.vy, b.vz = vel.T
     
-    acc_x, acc_y, acc_z = accTotal(b, t, include_j2=False, include_mag=False, include_rad=False)
+    acc_x, acc_y, acc_z = accTotal(b, t)
     acc = np.column_stack([acc_x, acc_y, acc_z])
     
     dydt = np.concatenate([vel.flatten(), acc.flatten()])
