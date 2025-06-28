@@ -139,9 +139,8 @@ if __name__ == '__main__':
         dustidx = nbodies # tracer in
         rho,rphys = 2.0,10.0*micron
         b[dustidx:].r = rphys
-        b[dustidx:].q = 1e-12 # Coulombs
-        # b[dustidx:].q = 0
-        b[dustidx:].Q = 0.5
+        # b[dustidx:].q = 1e-12 # Coulombs
+        b[dustidx:].q = 0
         b[dustidx:].m = 4*np.pi/3*rho*b[dustidx:].r**3
         b[dustidx:].x, b[dustidx:].y, b[dustidx:].z  = planet.x, planet.y, planet.z
         b[dustidx:].vx,b[dustidx:].vy,b[dustidx:].vz = planet.vx,planet.vy,planet.vz
@@ -202,7 +201,7 @@ if __name__ == '__main__':
     # --- done!!! --- #
     t_eval = tstart + np.linspace(0, 1.0*year, 500)
     
-    res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-6, t_eval=t_eval)
+    res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-13, t_eval=t_eval)
     
     xs = res.y[0,:]
     ys = res.y[1,:]
@@ -217,7 +216,7 @@ if __name__ == '__main__':
     yp = res.y[10,:]
     zp = res.y[11,:]
 
-    
+    '''
     print(f'Initial dust position: {xp[0]:.10e} {yp[0]:.10e} {zp[0]:.10e}')
     print(f'Initial earth position: {xe[0]:.10e} {ye[0]:.10e} {ze[0]:.10e}')
     ax_j2, ay_j2, az_j2 = nb.accJ2(b, tstart+0.5*year)
@@ -228,6 +227,8 @@ if __name__ == '__main__':
     print(f'Grav acc: {ax_grav[dustidx]:.10e}, {ay_grav[dustidx]:.10e}, {az_grav[dustidx]:.10e}')
     print(f'Mag acc: {ax_mag[dustidx]:.10e}, {ay_mag[dustidx]:.10e}, {az_mag[dustidx]:.10e}')
     print(f'Rad acc: {ax_rad[dustidx]:.10e}, {ay_rad[dustidx]:.10e}, {az_rad[dustidx]:.10e}')
+    '''
+    
     print(f'Final dust position: {xp[-1]:.10e} {yp[-1]:.10e} {zp[-1]:.10e}')
     print(f'Final earth position: {xe[-1]:.10e} {ye[-1]:.10e} {ze[-1]:.10e}')
     
