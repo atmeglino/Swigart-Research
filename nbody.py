@@ -138,7 +138,22 @@ def accGrav(b, t, soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravi
     Gm = GNewt * grav_masses[np.newaxis, :]
     acc_grav = np.sum(-Gm[:, :, np.newaxis] * dr / r_cube[:, :, np.newaxis], axis=1)
     
+    '''
+    acc_grav = np.zeros((len(b), 3))
+    bm = b[b.m>mthresh] # gravity
+    bdx = np.repeat(b.x[:,np.newaxis],len(bm),1)-np.repeat(bm.x[np.newaxis,:],len(b),0)
+    bdy = np.repeat(b.y[:,np.newaxis],len(bm),1)-np.repeat(bm.y[np.newaxis,:],len(b),0)
+    bdz = np.repeat(b.z[:,np.newaxis],len(bm),1)-np.repeat(bm.z[np.newaxis,:],len(b),0)
+    r3 = (bdx**2+bdy**2+bdz**2+soft**2)**(3/2)
+    Gm = GNewt*np.repeat(bm.m[np.newaxis,:],len(b),0)
+    acc_grav[:,0] = np.sum(-Gm * bdx / r3, axis=1) # x-component
+    acc_grav[:,1] = np.sum(-Gm * bdy / r3, axis=1) # y-component
+    acc_grav[:,2] = np.sum(-Gm * bdz / r3, axis=1) # z-component
+    
     return acc_grav[:, 0], acc_grav[:, 1], acc_grav[:, 2]
+    '''
+    # return acc_grav[:, 0], acc_grav[:, 1], acc_grav[:, 2]
+    return r_cube[:, 0], r_cube[:, 1], r_cube[:, 2]
 
 def accJ2(b, t):
     n_bodies = len(b)
@@ -157,6 +172,21 @@ def accJ2(b, t):
     aJ2 = gravJ2(rel_pos, J2, earth_spin(t))
     acc_j2[msk] = aJ2
     
+    '''
+    acc_j2 = np.zeros((len(b), 3))
+    xe,ye,ze = b[1].x,b[1].y,b[1].z
+    msk = b.m < 0.05*b[1].m # just the small stuff, incl. moon. should really limit by distance not mass!       
+    bt = b[msk]
+    rx,ry,rz = bt.x-xe,bt.y-ye,bt.z-ze
+    rvec = np.array([rx,ry,rz]).T
+    J2 = J2tildeEarth * GNewt * Mearth * Rearth**2
+    aJ2 = gravJ2(rvec,J2,earth_spin(t))
+    acc_j2[msk,0] += aJ2[:,0] # x-component
+    acc_j2[msk,1] += aJ2[:,1] # y-component
+    acc_j2[msk,2] += aJ2[:,2] # z-component
+    
+    return acc_j2[:, 0], acc_j2[:, 1], acc_j2[:, 2]
+    '''
     return acc_j2[:, 0], acc_j2[:, 1], acc_j2[:, 2]
 
 def gravJ2(r,J2,spinaxisplanet):  # returns accel given 3d pos r and physical J2 & spin vector (not J2tilde!)           
@@ -176,6 +206,25 @@ def gravJ2(r,J2,spinaxisplanet):  # returns accel given 3d pos r and physical J2
     z2 = z**2
     aJ2 = (J2/r7) * ((6*z2 - 1.5*rp2) * rp + (3*z2 - 4.5*rp2) * zvec)
     
+    '''
+    ez = unitvec(spinaxisplanet)
+    if r.ndim==1:
+        r7 = np.linalg.norm(r)**7
+        z = np.dot(r,ez)
+        zvec = z*ez
+        rp = r - zvec
+        rp2 = np.linalg.norm(rp)**2
+    else:
+        r7 = np.linalg.norm(r,axis=1)[:,np.newaxis]**7
+        z = np.dot(r,ez)[:,np.newaxis]
+        zvec = z * ez
+        rp = r - zvec
+        rp2 = np.linalg.norm(r,axis=1)[:,np.newaxis]**2
+    z2 = z**2
+    aJ2 = (J2/r7) * ((6*z2 - 1.5*rp2) * rp + (3*z2 - 4.5*rp2) * zvec)
+    
+    return aJ2
+    '''
     return aJ2
 
 def accMag(b, t):
@@ -199,6 +248,26 @@ def accMag(b, t):
     B = Bfield(rel_pos/meter, mmo)
     a = (b.q[msk] / (b.m[msk]/kg))[:, np.newaxis] * np.cross(rel_vel, B)
     acc_mag[msk] = a
+    
+    '''
+    acc_mag = np.zeros((len(b), 3))
+    msk = (b['q']>0)
+    if np.sum(msk)>0: # magnetic force
+        xe,ye,ze = b[1].x,b[1].y,b[1].z
+        vxe,vye,vze = b[1].vx,b[1].vy,b[1].vz
+        mmuEarth = 1e22
+        mmo  =  earth_magnetic_moment(t)
+        bt = b[msk]
+        rx,ry,rz,vx,vy,vz = bt.x-xe,bt.y-ye,bt.z-ze,bt.vx-vxe,bt.vy-vye,bt.vz-vze
+        mu0 = 4*np.pi*1e-7
+        rvec,vvec = np.array([rx,ry,rz]).T,np.array([vx,vy,vz]).T
+        B =  Bfield(rvec/meter,mmo)
+        a = (bt.q/(bt.m/kg))[:,np.newaxis] * np.cross(vvec,B) # m/s^2 the meters cancel out
+        acc_mag[msk, 0] = a[:,0] # x-component
+        acc_mag[msk, 1] = a[:,1] # y-component
+        acc_mag[msk, 2] = a[:,2] # z-component
+    return acc_mag[:, 0], acc_mag[:, 1], acc_mag[:, 2]
+    '''
     
     return acc_mag[:, 0], acc_mag[:, 1], acc_mag[:, 2]
         
@@ -237,6 +306,26 @@ def accRad(b):
     a = radacc_mag[:, np.newaxis] * radial_unit + pracc_mag[:, np.newaxis] * rel_vel
     acc_rad[msk] = a
     
+    '''
+    acc_rad = np.zeros((len(b), 3))
+    msk = (b['Q']>0)
+    if np.sum(msk)>0: # radiation pressure
+        xs,ys,zs,vxs,vys,vzs = b[0].x,b[0].y,b[0].z,b[0].vx,b[0].vy,b[0].vz
+        bt = b[msk]
+        rx,ry,rz,vx,vy,vz = bt.x-xs,bt.y-ys,bt.z-zs,bt.vx-vxs,bt.vy-vys,bt.vz-vzs
+        r2 = rx**2+ry**2+rz**2
+        rr = np.sqrt(r2)
+        Ap = np.pi*bt.r**2  # this is key! r thus defines cross section not physical radius....
+        S = Lsun/(4*np.pi*r2)
+        etadivQ = bt.eta/bt.Q
+        radacc = Ap*S*bt.Q/clight/bt.m*(1+etadivQ*uswind/clight-(1+etadivQ)*(vx*rx+vy*ry+vz*rz)/rr/clight)
+        pracc = -Ap*S*bt.Q/clight**2/bt.m*(1+etadivQ)
+        acc_rad[msk, 0] = radacc * rx / rr + pracc * vx # x-component
+        acc_rad[msk, 1] = radacc * ry / rr + pracc * vy # y-component
+        acc_rad[msk, 2] = radacc * rz / rr + pracc * vz # z-component
+    return acc_rad[:, 0], acc_rad[:, 1], acc_rad[:, 2]
+    '''
+    
     return acc_rad[:, 0], acc_rad[:, 1], acc_rad[:, 2]
 
 def accTotal(b,t,include_grav=True,include_j2=True,include_mag=True,include_rad=True):
@@ -264,12 +353,36 @@ def accTotal(b,t,include_grav=True,include_j2=True,include_mag=True,include_rad=
     return acc_total[:, 0], acc_total[:, 1], acc_total[:, 2]
 
 def getPosition(b):
+    '''
+    n_bodies = len(b)
+    
+    pos = np.zeros((n_bodies, 3))
+    for i in range(n_bodies):
+        pos[i] = [b[i].x, b[i].y, b[i].z]
+    
+    return pos
+    '''
     return np.column_stack([b.x, b.y, b.z])
 
 def getVelocity(b):
+    '''
+    n_bodies = len(b)
+    
+    vel = np.zeros((n_bodies, 3))
+    for i in range(n_bodies):
+        vel[i] = [b[i].vx, b[i].vy, b[i].vz]
+    
+    return vel
+    '''
     return np.column_stack([b.vx, b.vy, b.vz])
 
 def initialState(b):
+    '''
+    pos, vel = getPosition(b), getVelocity(b)
+    init_state = np.concatenate([pos.flatten(), vel.flatten()])
+    
+    return init_state
+    '''
     pos, vel = getPosition(b), getVelocity(b)
     return np.concatenate([pos.flatten(), vel.flatten()])
 
@@ -288,6 +401,22 @@ def ode(t, y, b):
     acc = np.column_stack([acc_x, acc_y, acc_z])
     
     dydt = np.concatenate([vel.flatten(), acc.flatten()])
+    
+    '''
+    n_bodies = len(b)
+    
+    # solve_ivp uses y (flat array of state variables) but our physics functions
+    # use b (structured array), so must re-write y into b
+    for i in range(n_bodies):
+        b[i].x, b[i].y, b[i].z = y[3*i:3*i+3]
+        b[i].vx, b[i].vy, b[i].vz = y[3*n_bodies + 3*i:3*n_bodies + 3*i+3]
+    
+    vel = getVelocity(b)
+    acc = np.column_stack(accTotal(b,t))
+    dydt = np.concatenate([vel.flatten(), acc.flatten()])
+    
+    return dydt
+    '''
     
     return dydt
         

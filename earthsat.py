@@ -198,6 +198,15 @@ if __name__ == '__main__':
     framedat = np.array(framedat)
     '''
     
+    ax_grav, ay_grav, az_grav = nb.accGrav(b, tstart)
+    print(f'Grav acc: {ax_grav[dustidx]:.10e}, {ay_grav[dustidx]:.10e}, {az_grav[dustidx]:.10e}')
+    exit()
+    
+    
+    grav = nb.accGrav(b, tstart)
+    print(grav)
+    exit()
+    
     
     # --- done!!! --- #
     t_eval = tstart + np.linspace(0, 1.0*year, 500)
