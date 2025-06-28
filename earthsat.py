@@ -218,16 +218,16 @@ if __name__ == '__main__':
     zp = res.y[11,:]
 
     
-    # print(f'Initial dust position: {xp[0]:.10e} {yp[0]:.10e} {zp[0]:.10e}')
-    # print(f'Initial earth position: {xe[0]:.10e} {ye[0]:.10e} {ze[0]:.10e}')
+    print(f'Initial dust position: {xp[0]:.10e} {yp[0]:.10e} {zp[0]:.10e}')
+    print(f'Initial earth position: {xe[0]:.10e} {ye[0]:.10e} {ze[0]:.10e}')
     ax_j2, ay_j2, az_j2 = nb.accJ2(b, tstart+0.5*year)
-    # ax_grav, ay_grav, az_grav = nb.accGrav(b, tstart+0.5*year)
-    # ax_mag, ay_mag, az_mag = nb.accMag(b, tstart+0.5*year)
-    # ax_rad, ay_rad, az_rad = nb.accRad(b)
+    ax_grav, ay_grav, az_grav = nb.accGrav(b, tstart+0.5*year)
+    ax_mag, ay_mag, az_mag = nb.accMag(b, tstart+0.5*year)
+    ax_rad, ay_rad, az_rad = nb.accRad(b)
     print(f'J2 acc: {ax_j2[dustidx]:.10e}, {ay_j2[dustidx]:.10e}, {az_j2[dustidx]:.10e}')
-    # print(f'Grav acc: {ax_grav[dustidx]:.10e}, {ay_grav[dustidx]:.10e}, {az_grav[dustidx]:.10e}')
-    # print(f'Mag acc: {ax_mag[dustidx]:.10e}, {ay_mag[dustidx]:.10e}, {az_mag[dustidx]:.10e}')
-    # print(f'Rad acc: {ax_rad[dustidx]:.10e}, {ay_rad[dustidx]:.10e}, {az_rad[dustidx]:.10e}')
+    print(f'Grav acc: {ax_grav[dustidx]:.10e}, {ay_grav[dustidx]:.10e}, {az_grav[dustidx]:.10e}')
+    print(f'Mag acc: {ax_mag[dustidx]:.10e}, {ay_mag[dustidx]:.10e}, {az_mag[dustidx]:.10e}')
+    print(f'Rad acc: {ax_rad[dustidx]:.10e}, {ay_rad[dustidx]:.10e}, {az_rad[dustidx]:.10e}')
     print(f'Final dust position: {xp[-1]:.10e} {yp[-1]:.10e} {zp[-1]:.10e}')
     print(f'Final earth position: {xe[-1]:.10e} {ye[-1]:.10e} {ze[-1]:.10e}')
     
