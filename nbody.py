@@ -152,7 +152,7 @@ def accGrav(b, t, soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravi
     
     return acc_grav[:, 0], acc_grav[:, 1], acc_grav[:, 2]
     '''
-    return acc_grav[:, 0], acc_grav[:, 1], acc_grav[:, 2], r_cube[:, 0], r_cube[:, 1], r_cube[:, 2]
+    return acc_grav[:, 0], acc_grav[:, 1], acc_grav[:, 2]
 
 def accJ2(b, t):
     n_bodies = len(b)
@@ -330,7 +330,7 @@ def accRad(b):
 def accTotal(b,t,include_grav=True,include_j2=True,include_mag=True,include_rad=True):
     acc_total = np.zeros((len(b), 3))
     if include_grav:
-        grav_x, grav_y, grav_z, t1, t2, t3 = accGrav(b, t)
+        grav_x, grav_y, grav_z = accGrav(b, t)
         acc_total[:, 0] += grav_x
         acc_total[:, 1] += grav_y
         acc_total[:, 2] += grav_z
