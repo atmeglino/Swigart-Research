@@ -152,8 +152,8 @@ def accGrav(b, t, soft=1e-99, mthresh=1e10):   # mthresh sets if body is a gravi
     
     return acc_grav[:, 0], acc_grav[:, 1], acc_grav[:, 2]
     '''
-    # return acc_grav[:, 0], acc_grav[:, 1], acc_grav[:, 2]
-    return r_cube[:, 0], r_cube[:, 1], r_cube[:, 2]
+    return acc_grav[:, 0], acc_grav[:, 1], acc_grav[:, 2]
+    # return r_cube[:, 0], r_cube[:, 1], r_cube[:, 2]
 
 def accJ2(b, t):
     n_bodies = len(b)
