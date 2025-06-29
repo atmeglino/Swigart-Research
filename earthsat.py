@@ -9,6 +9,7 @@ from constants import *
 from scipy.integrate import solve_ivp
 import matplotlib as mpl
 from matplotlib.collections import LineCollection
+from scipy.spatial.transform import Rotation as Ro
 
 
 def printposvel(q):
@@ -166,7 +167,35 @@ if __name__ == '__main__':
         b[dustidx:].vx += vel[...,0] # dust velocity direction matches earth's relative to sun
         b[dustidx:].vy += vel[...,1]
         b[dustidx:].vz += vel[...,2]
-
+    
+    # sun-sync orbit:
+    
+    rc = 1.25*planet.r # starting position for sun-sync orbit
+    vc = np.sqrt(GNewt*planet.m/rc) # circular velocity
+    esun = nb.unitvec(nb.posrel(b[0],b[1]))  # unit vec form
+    # print(esun)
+    # exit()
+    ptilt = 13*degree
+    # do a rotation about esun, 13 degrees. 23 degrees would align earth spim w/z axis
+    # epolar = qrotate(epolar,quat(cos(ptilt/2),sin(ptilt/2)*esun)) # ptilt=0 is a polar orbit. 90 deg is equatorial 
+    rotv = esun*np.sin(ptilt/2)
+    epolar = Ro.from_quat([rotv[0],rotv[1],rotv[2],np.cos(ptilt/2)]) # might need to use -ptilt?
+    # print(epolar.as_matrix()[0])          
+    evel = -nb.unitvec(np.cross(np.cross(epolar,esun),epolar))  # cross prods to get vel pointed in good direction
+    '''
+    which part of epolar should be used in above cross product?
+    '''
+    # print(evel)
+    # exit()
+    '''
+    which part of epolar/evel to use in below lines?
+    '''
+    b[dustidx:].x = planet.x + rc * epolar[0]
+    b[dustidx:].y = planet.y + rc * epolar[0]
+    b[dustidx:].z = planet.z + rc * epolar[0]
+    b[dustidx:].vx = planet.vx + vc * evel[0]
+    b[dustidx:].vy = planet.vy + vc * evel[0]
+    b[dustidx:].vz = planet.vz + vc * evel[0]
 
     # --- all done set up! --- prelim check: orb els of earth...
     a,e,i = nb.orbels(b[1],b[0])
@@ -199,7 +228,7 @@ if __name__ == '__main__':
     
     
     # --- done!!! --- #
-    t_eval = tstart + np.linspace(0, 1.0*year, 500)
+    t_eval = tstart + np.linspace(0, 7*day, 500)
     
     res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-13, t_eval=t_eval)
     
