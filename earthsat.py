@@ -176,12 +176,17 @@ if __name__ == '__main__':
     # print(esun)
     # exit()
     ptilt = 13*degree
-    # do a rotation about esun, 13 degrees. 23 degrees would align earth spim w/z axis
-    # epolar = qrotate(epolar,quat(cos(ptilt/2),sin(ptilt/2)*esun)) # ptilt=0 is a polar orbit. 90 deg is equatorial 
-    rotv = esun*np.sin(ptilt/2)
-    epolar = Ro.from_quat([rotv[0],rotv[1],rotv[2],np.cos(ptilt/2)]) # might need to use -ptilt?
-    # print(epolar.as_matrix()[0])          
+    r = Ro.from_quat([np.sin(ptilt/2)*esun[0], np.sin(ptilt/2)*esun[1], np.sin(ptilt/2)*esun[2], np.cos(ptilt/2)])
+    epolar = r.apply(ez)
+    print(r.as_matrix())
     evel = -nb.unitvec(np.cross(np.cross(epolar,esun),epolar))  # cross prods to get vel pointed in good direction
+    # do a rotation about esun, 13 degrees. 23 degrees would align earth spim w/z axis
+    # epolar = qrotate(epolar,quat(np.cos(ptilt/2),np.sin(ptilt/2)*esun)) # ptilt=0 is a polar orbit. 90 deg is equatorial 
+    # rotv = esun*np.sin(ptilt/2)
+    # epolar = Ro.from_quat([rotv[0],rotv[1],rotv[2],np.cos(ptilt/2)]) # might need to use -ptilt?
+    # print(epolar.as_matrix())
+    # exit()
+    # evel = -nb.unitvec(np.cross(np.cross(epolar,esun),epolar))  # cross prods to get vel pointed in good direction
     '''
     which part of epolar should be used in above cross product?
     '''
@@ -191,11 +196,11 @@ if __name__ == '__main__':
     which part of epolar/evel to use in below lines?
     '''
     b[dustidx:].x = planet.x + rc * epolar[0]
-    b[dustidx:].y = planet.y + rc * epolar[0]
-    b[dustidx:].z = planet.z + rc * epolar[0]
+    b[dustidx:].y = planet.y + rc * epolar[1]
+    b[dustidx:].z = planet.z + rc * epolar[2]
     b[dustidx:].vx = planet.vx + vc * evel[0]
-    b[dustidx:].vy = planet.vy + vc * evel[0]
-    b[dustidx:].vz = planet.vz + vc * evel[0]
+    b[dustidx:].vy = planet.vy + vc * evel[1]
+    b[dustidx:].vz = planet.vz + vc * evel[2]
 
     # --- all done set up! --- prelim check: orb els of earth...
     a,e,i = nb.orbels(b[1],b[0])
@@ -283,6 +288,16 @@ if __name__ == '__main__':
     for xi, yi, zi in zip(xp[::10], yp[::10], zp[::10]):
         print(f"{xi:.6e} {yi:.6e} {zi:.6e}")
     '''
+    
+    framedat = []
+    # framedat.append([float(len(b)),tnow]+[q for p in b for q in (p.m,p.r,p.x,p.y,p.z,p.vx,p.vy,p.vz,p.L)])
+    for i in range(len(xs)):
+        # make a list of lists
+        # each list is for each body, with time, r, pos, vel, L (set L=0 for everyone)
+        framedat = np.append(framedat, [[res.t[i]] + [p.m, p.r, p.x[i], p.y[i], p.z[i], p.vx[i], p.vy[i], p.vz[i], 0] for p in b])
+    framedat = np.array(framedat)
+    fbin = 'earthsat.bin'
+    if fbin: framedat.tofile(fbin)
     
     exit()
     
