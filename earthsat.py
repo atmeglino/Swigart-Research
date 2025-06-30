@@ -173,8 +173,6 @@ if __name__ == '__main__':
     rc = 1.25*planet.r # starting position for sun-sync orbit
     vc = np.sqrt(GNewt*planet.m/rc) # circular velocity
     esun = nb.unitvec(nb.posrel(b[0],b[1]))  # unit vec form
-    # print(esun)
-    # exit()
     ptilt = 13*degree
     r = Ro.from_quat([np.sin(ptilt/2)*esun[0], np.sin(ptilt/2)*esun[1], np.sin(ptilt/2)*esun[2], np.cos(ptilt/2)])
     epolar = r.apply(ez)
@@ -184,17 +182,7 @@ if __name__ == '__main__':
     # epolar = qrotate(epolar,quat(np.cos(ptilt/2),np.sin(ptilt/2)*esun)) # ptilt=0 is a polar orbit. 90 deg is equatorial 
     # rotv = esun*np.sin(ptilt/2)
     # epolar = Ro.from_quat([rotv[0],rotv[1],rotv[2],np.cos(ptilt/2)]) # might need to use -ptilt?
-    # print(epolar.as_matrix())
-    # exit()
     # evel = -nb.unitvec(np.cross(np.cross(epolar,esun),epolar))  # cross prods to get vel pointed in good direction
-    '''
-    which part of epolar should be used in above cross product?
-    '''
-    # print(evel)
-    # exit()
-    '''
-    which part of epolar/evel to use in below lines?
-    '''
     b[dustidx:].x = planet.x + rc * epolar[0]
     b[dustidx:].y = planet.y + rc * epolar[1]
     b[dustidx:].z = planet.z + rc * epolar[2]
