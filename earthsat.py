@@ -10,6 +10,7 @@ from scipy.integrate import solve_ivp
 import matplotlib as mpl
 from matplotlib.collections import LineCollection
 from scipy.spatial.transform import Rotation as Ro
+import time
 
 
 def printposvel(q):
@@ -143,9 +144,12 @@ if __name__ == '__main__':
         # b[dustidx:].q = 1e-12 # Coulombs
         b[dustidx:].q = 0
         b[dustidx:].m = 4*np.pi/3*rho*b[dustidx:].r**3
+        '''
         b[dustidx:].x, b[dustidx:].y, b[dustidx:].z  = planet.x, planet.y, planet.z
         b[dustidx:].vx,b[dustidx:].vy,b[dustidx:].vz = planet.vx,planet.vy,planet.vz
+        '''
         ex,ey,ez = nb.bodyframe(tstart,teqxjd*day,bfeq,pspin)
+        '''
         r = 3*planet.r
         v = np.sqrt(GNewt*planet.m/r)
         # phi = np.random.uniform(0,2*np.pi,ndust)[:,np.newaxis] # new axis to spread around 3d coord variables
@@ -167,16 +171,15 @@ if __name__ == '__main__':
         b[dustidx:].vx += vel[...,0] # dust velocity direction matches earth's relative to sun
         b[dustidx:].vy += vel[...,1]
         b[dustidx:].vz += vel[...,2]
+        '''
     
     # sun-sync orbit:
-    
     rc = 1.25*planet.r # starting position for sun-sync orbit
     vc = np.sqrt(GNewt*planet.m/rc) # circular velocity
     esun = nb.unitvec(nb.posrel(b[0],b[1]))  # unit vec form
     ptilt = 13*degree
     r = Ro.from_quat([np.sin(ptilt/2)*esun[0], np.sin(ptilt/2)*esun[1], np.sin(ptilt/2)*esun[2], np.cos(ptilt/2)])
     epolar = r.apply(ez)
-    print(r.as_matrix())
     evel = -nb.unitvec(np.cross(np.cross(epolar,esun),epolar))  # cross prods to get vel pointed in good direction
     # do a rotation about esun, 13 degrees. 23 degrees would align earth spim w/z axis
     # epolar = qrotate(epolar,quat(np.cos(ptilt/2),np.sin(ptilt/2)*esun)) # ptilt=0 is a polar orbit. 90 deg is equatorial 
@@ -189,6 +192,7 @@ if __name__ == '__main__':
     b[dustidx:].vx = planet.vx + vc * evel[0]
     b[dustidx:].vy = planet.vy + vc * evel[1]
     b[dustidx:].vz = planet.vz + vc * evel[2]
+
 
     # --- all done set up! --- prelim check: orb els of earth...
     a,e,i = nb.orbels(b[1],b[0])
@@ -221,7 +225,9 @@ if __name__ == '__main__':
     
     
     # --- done!!! --- #
-    t_eval = tstart + np.linspace(0, 7*day, 500)
+    t_eval = tstart + np.linspace(0, 0.5*year, 500)
+    
+    start_time = time.time()
     
     res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-13, t_eval=t_eval)
     
@@ -237,45 +243,40 @@ if __name__ == '__main__':
     xp = res.y[9,:]
     yp = res.y[10,:]
     zp = res.y[11,:]
-
-    '''
-    print(f'Initial dust position: {xp[0]:.10e} {yp[0]:.10e} {zp[0]:.10e}')
-    print(f'Initial earth position: {xe[0]:.10e} {ye[0]:.10e} {ze[0]:.10e}')
-    ax_j2, ay_j2, az_j2 = nb.accJ2(b, tstart+0.5*year)
-    ax_grav, ay_grav, az_grav = nb.accGrav(b, tstart+0.5*year)
-    ax_mag, ay_mag, az_mag = nb.accMag(b, tstart+0.5*year)
-    ax_rad, ay_rad, az_rad = nb.accRad(b)
-    print(f'J2 acc: {ax_j2[dustidx]:.10e}, {ay_j2[dustidx]:.10e}, {az_j2[dustidx]:.10e}')
-    print(f'Grav acc: {ax_grav[dustidx]:.10e}, {ay_grav[dustidx]:.10e}, {az_grav[dustidx]:.10e}')
-    print(f'Mag acc: {ax_mag[dustidx]:.10e}, {ay_mag[dustidx]:.10e}, {az_mag[dustidx]:.10e}')
-    print(f'Rad acc: {ax_rad[dustidx]:.10e}, {ay_rad[dustidx]:.10e}, {az_rad[dustidx]:.10e}')
-    '''
+    
     
     print(f'Final dust position: {xp[-1]:.10e} {yp[-1]:.10e} {zp[-1]:.10e}')
     print(f'Final earth position: {xe[-1]:.10e} {ye[-1]:.10e} {ze[-1]:.10e}')
     
-    exit()
     
-    
-    pl.clf()
     # Plot below to see sun, earth, moon system
+    pl.figure()
+    pl.clf()
     #pl.plot(xs,ys, '.k', color='green')
-    #pl.plot(xe,ye, '.k', color='blue')
+    pl.plot(xe,ye, '.k', color='blue')
     #pl.plot(xm,ym, ':', color='red', linewidth=4)
-    #pl.plot(xp,yp, ':', color='pink', linewidth=2)
+    pl.plot(xp,yp, ':', color='pink', linewidth=2)
     #pl.plot(res.t,xe,'.k')
+    pl.savefig('system.png', dpi=300)
+    pl.close()
     
-    # Plot below to see moon and particle relative to earth (?)
+    # Plot below to see moon and particle relative to earth
+    pl.figure()
+    pl.clf()
     #pl.plot(xm-xe,ym-ye,'.m', color='red')
     pl.plot(xp-xe,yp-ye,'.m', color='pink')
-    pl.show()
-    pl.savefig('fig.png', dpi=300)
+    pl.savefig('reltoearth.png', dpi=300)
     pl.close()
+    
+    end_time = time.time()
+    print(f"Elapsed time: {end_time - start_time:.2f} seconds")
     
     '''
     for xi, yi, zi in zip(xp[::10], yp[::10], zp[::10]):
         print(f"{xi:.6e} {yi:.6e} {zi:.6e}")
     '''
+    
+    exit()
     
     framedat = []
     # framedat.append([float(len(b)),tnow]+[q for p in b for q in (p.m,p.r,p.x,p.y,p.z,p.vx,p.vy,p.vz,p.L)])
