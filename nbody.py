@@ -172,7 +172,7 @@ def gravJ2(r,J2,spinaxisplanet):  # returns accel given 3d pos r and physical J2
         z = np.dot(r,ez)[:,np.newaxis]
         zvec = z * ez
         rp = r - zvec
-        rp2 = np.linalg.norm(r,axis=1)[:,np.newaxis]**2
+        rp2 = np.linalg.norm(rp,axis=1)[:,np.newaxis]**2
     z2 = z**2
     aJ2 = (J2/r7) * ((6*z2 - 1.5*rp2) * rp + (3*z2 - 4.5*rp2) * zvec)
     
@@ -284,7 +284,7 @@ def ode(t, y, b):
     b.x, b.y, b.z = pos.T
     b.vx, b.vy, b.vz = vel.T
     
-    acc_x, acc_y, acc_z = accTotal(b, t, include_j2=False)
+    acc_x, acc_y, acc_z = accTotal(b, t)
     acc = np.column_stack([acc_x, acc_y, acc_z])
     
     dydt = np.concatenate([vel.flatten(), acc.flatten()])
