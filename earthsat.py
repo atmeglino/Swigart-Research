@@ -178,8 +178,8 @@ if __name__ == '__main__':
     vc = np.sqrt(GNewt*planet.m/rc) # circular velocity
     esun = nb.unitvec(nb.posrel(b[0],b[1]))  # unit vec form
     ptilt = 13*degree
-    r = Ro.from_quat([np.sin(ptilt/2)*esun[0], np.sin(ptilt/2)*esun[1], np.sin(ptilt/2)*esun[2], np.cos(ptilt/2)])
-    epolar = r.apply(ez)
+    r = Ro.from_quat([np.sin(ptilt/2)*esun[0], np.sin(ptilt/2)*esun[1], np.sin(ptilt/2)*esun[2], np.cos(ptilt/2)]) # creates rotation object
+    epolar = r.apply(ez) # applies rotation to ez vector
     evel = -nb.unitvec(np.cross(np.cross(epolar,esun),epolar))  # cross prods to get vel pointed in good direction
     # do a rotation about esun, 13 degrees. 23 degrees would align earth spim w/z axis
     # epolar = qrotate(epolar,quat(np.cos(ptilt/2),np.sin(ptilt/2)*esun)) # ptilt=0 is a polar orbit. 90 deg is equatorial 
@@ -227,8 +227,6 @@ if __name__ == '__main__':
     # --- done!!! --- #
     t_eval = tstart + np.linspace(0, 0.5*year, 500)
     
-    start_time = time.time()
-    
     res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-13, t_eval=t_eval)
     
     xs = res.y[0,:]
@@ -245,8 +243,46 @@ if __name__ == '__main__':
     zp = res.y[11,:]
     
     
+    esun = np.column_stack([xs-xe, ys-ye, zs-ze])
+    esun_unit = esun / np.linalg.norm(esun, axis=1)[:, None]
+    
+    xp_rot = np.zeros_like(xp)
+    yp_rot = np.zeros_like(yp)
+    zp_rot = np.zeros_like(zp)
+    
+    for i in range(len(xp)):
+        particle_pos = np.array([xp[i]-xe[i], yp[i]-ye[i], zp[i]-ze[i]])
+        
+        current_sun_dir = esun_unit[i]
+        target_dir = np.array([1, 0, 0])  # +x axis
+        
+        rotation = Ro.align_vectors([target_dir], [current_sun_dir])[0] # creates rotation object
+        
+        rotated_pos = rotation.apply(particle_pos)
+        
+        xp_rot[i] = rotated_pos[0]
+        yp_rot[i] = rotated_pos[1]
+        zp_rot[i] = rotated_pos[2]
+        
+    pl.figure()
+    pl.clf()
+    pl.plot(xp_rot, yp_rot, ':', color='pink', linewidth=2)
+
+    # Earth and Sun direction
+    earth_circle = plt.Circle((0, 0), 1.0, color='blue', alpha=0.3)
+    pl.gca().add_patch(earth_circle)
+    pl.arrow(0, 0, 2, 0, head_width=0.1, head_length=0.1, fc='yellow', ec='yellow')
+
+    pl.gca().set_aspect('equal')
+    pl.xlabel('x [Earth radii] (Sun direction)')
+    pl.ylabel('y [Earth radii]')
+    pl.savefig('corotating.png', dpi=300)
+    pl.close()
+    
     print(f'Final dust position: {xp[-1]:.10e} {yp[-1]:.10e} {zp[-1]:.10e}')
     print(f'Final earth position: {xe[-1]:.10e} {ye[-1]:.10e} {ze[-1]:.10e}')
+    
+    exit()
     
     
     # Plot below to see sun, earth, moon system
@@ -268,8 +304,6 @@ if __name__ == '__main__':
     pl.savefig('reltoearth.png', dpi=300)
     pl.close()
     
-    end_time = time.time()
-    print(f"Elapsed time: {end_time - start_time:.2f} seconds")
     
     '''
     for xi, yi, zi in zip(xp[::10], yp[::10], zp[::10]):
