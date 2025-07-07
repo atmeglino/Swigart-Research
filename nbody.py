@@ -290,6 +290,66 @@ def ode(t, y, b):
     dydt = np.concatenate([vel.flatten(), acc.flatten()])
     
     return dydt
+
+def orbitEquatorial(b, distance, dustidx, ndust, ex, ey):
+    planet = b[1]
+    b[dustidx:].x, b[dustidx:].y, b[dustidx:].z  = planet.x, planet.y, planet.z
+    b[dustidx:].vx,b[dustidx:].vy,b[dustidx:].vz = planet.vx,planet.vy,planet.vz
+    r = distance*planet.r
+    v = np.sqrt(GNewt*planet.m/r)
+    phi = np.random.uniform(0,2*np.pi,ndust)[:,np.newaxis] # new axis to spread around 3d coord variables; random motion
+    pos =  r*np.cos(phi)*ex + r*np.sin(phi)*ey
+    vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ey
+    
+    b[dustidx:].x += pos[...,0]
+    b[dustidx:].y += pos[...,1]
+    b[dustidx:].z += pos[...,2]
+    b[dustidx:].vx += vel[...,0]
+    b[dustidx:].vy += vel[...,1]
+    b[dustidx:].vz += vel[...,2]
+    
+def orbitPolar(b, distance, dustidx, ex, ez, barycenter=False, sun=True):
+    planet = b[1]
+    b[dustidx:].x, b[dustidx:].y, b[dustidx:].z  = planet.x, planet.y, planet.z
+    b[dustidx:].vx,b[dustidx:].vy,b[dustidx:].vz = planet.vx,planet.vy,planet.vz
+    r = distance*planet.r
+    v = np.sqrt(GNewt*planet.m/r)
+    phi = np.pi/2 # for polar orbit starting above north pole
+    pos = r*np.cos(phi)*ex + r*np.sin(phi)*ez
+    if sun:
+        earth_vel = np.array([planet.vx - b[0].vx, planet.vy - b[0].vy, planet.vz - b[0].vz]) # for vel in same dir as earth w/ respect to sun
+    if barycenter:
+        earth_vel = np.array([planet.vx, planet.vy, planet.vz]) # for vel in same dir as earth w/ respect to barycenter
+    earth_vel_direction = earth_vel / np.linalg.norm(earth_vel)
+    vel = v * earth_vel_direction
+    
+    b[dustidx:].x += pos[...,0]
+    b[dustidx:].y += pos[...,1]
+    b[dustidx:].z += pos[...,2]
+    b[dustidx:].vx += vel[...,0]
+    b[dustidx:].vy += vel[...,1]
+    b[dustidx:].vz += vel[...,2]
+
+def orbitSunSync(b, dustidx, ez):
+    planet = b[1] # earth
+    rc = 1.25*planet.r # starting position for sun-sync orbit
+    vc = np.sqrt(GNewt*planet.m/rc) # circular velocity
+    esun = unitvec(posrel(b[0],b[1]))  # unit vec form
+    ptilt = 13*degree
+    r = Ro.from_quat([np.sin(ptilt/2)*esun[0], np.sin(ptilt/2)*esun[1], np.sin(ptilt/2)*esun[2], np.cos(ptilt/2)]) # creates rotation object
+    epolar = r.apply(ez) # applies rotation to ez vector
+    evel = -unitvec(np.cross(np.cross(epolar,esun),epolar))  # cross prods to get vel pointed in good direction
+    # do a rotation about esun, 13 degrees. 23 degrees would align earth spim w/z axis
+    # epolar = qrotate(epolar,quat(np.cos(ptilt/2),np.sin(ptilt/2)*esun)) # ptilt=0 is a polar orbit. 90 deg is equatorial 
+    # rotv = esun*np.sin(ptilt/2)
+    # epolar = Ro.from_quat([rotv[0],rotv[1],rotv[2],np.cos(ptilt/2)]) # might need to use -ptilt?
+    # evel = -nb.unitvec(np.cross(np.cross(epolar,esun),epolar))  # cross prods to get vel pointed in good direction
+    b[dustidx:].x = planet.x + rc * epolar[0]
+    b[dustidx:].y = planet.y + rc * epolar[1]
+    b[dustidx:].z = planet.z + rc * epolar[2]
+    b[dustidx:].vx = planet.vx + vc * evel[0]
+    b[dustidx:].vy = planet.vy + vc * evel[1]
+    b[dustidx:].vz = planet.vz + vc * evel[2]
         
 def step(b,t,dt,acc):
     b.x,b.y,b.z = b.x+0.5*dt*b.vx,b.y+0.5*dt*b.vy,b.z+0.5*dt*b.vz

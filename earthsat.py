@@ -96,8 +96,8 @@ if __name__ == '__main__':
     
     tnowjd = sun.jd
     teqxjd = TmarchequinoxEarth2025JD # must be march equinox in julian daya                                     
-    print('this epoch UTC:', pd.to_datetime(tnowjd,unit='D',origin='julian'))
-    print('Earth frame reference date:', pd.to_datetime(teqxjd,unit='D',origin='julian'))
+    # print('this epoch UTC:', pd.to_datetime(tnowjd,unit='D',origin='julian'))
+    # print('Earth frame reference date:', pd.to_datetime(teqxjd,unit='D',origin='julian'))
     bfeq = nb.earth_spin_init(b,tnowjd*day,0,1)
     pspin = PspinEarth
     tstart = tnowjd*day
@@ -105,7 +105,7 @@ if __name__ == '__main__':
     # here set up the Earth's magnetic field. This is hack…
     nb.earth_magnetic_moment_init(b,tnowjd*day,si=0,ei=1)
     mmo = nb.earth_magnetic_moment(tnowjd*day)
-    print(f'mag north rel tilt: {np.arccos(np.dot(bfeq[2],nb.unitvec(mmo)))/degree:1.5} deg')
+    # print(f'mag north rel tilt: {np.arccos(np.dot(bfeq[2],nb.unitvec(mmo)))/degree:1.5} deg')
     
     # bfeq = nb.bodyframe_equinox(tilt,orbinfo=(b,0,1,(teqxjd-tnowjd)*day)) # use this for mars
     # bfeq = nb.bodyframe_earth(b,0,1,tstart,teqxjd*day,tilt,pspin) 
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     # nb.magmoearthlalo = (90,0)
     nb.earth_magnetic_moment_init(b,tstart,si=0,ei=1)
     mmo = nb.earth_magnetic_moment(tstart)
-    print(f'mag north rel tilt: {np.arccos(np.dot(bfeq[2],nb.unitvec(mmo)))/degree:1.5} deg')
+    # print(f'mag north rel tilt: {np.arccos(np.dot(bfeq[2],nb.unitvec(mmo)))/degree:1.5} deg')
     
     '''
     mytest = True
@@ -135,64 +135,25 @@ if __name__ == '__main__':
         test_local_frame(tnewjd,lat,lon, tnewjd*day,b,tstart,teqxjd*day,bfeq,pspin)
     '''
 
-    # now set up a tracer particle, orbiting earth around equatorial plane + random motion
+    # now set up a tracer particle
     if ndust:
-        planet = b[1]
         dustidx = nbodies # tracer in
         rho,rphys = 2.0,10.0*micron
         b[dustidx:].r = rphys
         # b[dustidx:].q = 1e-12 # Coulombs
         b[dustidx:].q = 0
         b[dustidx:].m = 4*np.pi/3*rho*b[dustidx:].r**3
-        '''
-        b[dustidx:].x, b[dustidx:].y, b[dustidx:].z  = planet.x, planet.y, planet.z
-        b[dustidx:].vx,b[dustidx:].vy,b[dustidx:].vz = planet.vx,planet.vy,planet.vz
-        '''
         ex,ey,ez = nb.bodyframe(tstart,teqxjd*day,bfeq,pspin)
-        '''
-        r = 3*planet.r
-        v = np.sqrt(GNewt*planet.m/r)
-        # phi = np.random.uniform(0,2*np.pi,ndust)[:,np.newaxis] # new axis to spread around 3d coord variables
-        phi = np.pi/2 # for polar orbit starting above north pole
-        # pos =  r*np.cos(phi)*ex + r*np.sin(phi)*ey # for equitorial orbit
-        # vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ey # for equitorial orbit
-        pos =  r*np.cos(phi)*ex + r*np.sin(phi)*ez # for polar orbit
-        # vel = -v*np.sin(phi)*ex + v*np.cos(phi)*ez # for polar orbit
-        earth_vel = np.array([planet.vx, planet.vy, planet.vz]) # for vel in same dir as earth w/ respect to barycenter
-        # earth_vel = np.array([planet.vx - b[0].vx, planet.vy - b[0].vy, planet.vz - b[0].vz]) # for vel in same dir as earth w/ respect to sun
-        earth_vel_direction = earth_vel / np.linalg.norm(earth_vel)
-        vel = v * earth_vel_direction
-        b[dustidx:].x += pos[...,0]
-        b[dustidx:].y += pos[...,1]
-        b[dustidx:].z += pos[...,2]
-        # b[dustidx:].vx += vel[:,0]
-        # b[dustidx:].vy += vel[:,1]
-        # b[dustidx:].vz += vel[:,2]
-        b[dustidx:].vx += vel[...,0] # dust velocity direction matches earth's relative to sun
-        b[dustidx:].vy += vel[...,1]
-        b[dustidx:].vz += vel[...,2]
-        '''
-    
-    # sun-sync orbit:
-    rc = 1.25*planet.r # starting position for sun-sync orbit
-    vc = np.sqrt(GNewt*planet.m/rc) # circular velocity
-    esun = nb.unitvec(nb.posrel(b[0],b[1]))  # unit vec form
-    ptilt = 13*degree
-    r = Ro.from_quat([np.sin(ptilt/2)*esun[0], np.sin(ptilt/2)*esun[1], np.sin(ptilt/2)*esun[2], np.cos(ptilt/2)]) # creates rotation object
-    epolar = r.apply(ez) # applies rotation to ez vector
-    evel = -nb.unitvec(np.cross(np.cross(epolar,esun),epolar))  # cross prods to get vel pointed in good direction
-    # do a rotation about esun, 13 degrees. 23 degrees would align earth spim w/z axis
-    # epolar = qrotate(epolar,quat(np.cos(ptilt/2),np.sin(ptilt/2)*esun)) # ptilt=0 is a polar orbit. 90 deg is equatorial 
-    # rotv = esun*np.sin(ptilt/2)
-    # epolar = Ro.from_quat([rotv[0],rotv[1],rotv[2],np.cos(ptilt/2)]) # might need to use -ptilt?
-    # evel = -nb.unitvec(np.cross(np.cross(epolar,esun),epolar))  # cross prods to get vel pointed in good direction
-    b[dustidx:].x = planet.x + rc * epolar[0]
-    b[dustidx:].y = planet.y + rc * epolar[1]
-    b[dustidx:].z = planet.z + rc * epolar[2]
-    b[dustidx:].vx = planet.vx + vc * evel[0]
-    b[dustidx:].vy = planet.vy + vc * evel[1]
-    b[dustidx:].vz = planet.vz + vc * evel[2]
 
+    # equitorial orbit:
+    # nb.orbitEquatorial(b, 5, dustidx, ndust, ex, ey)
+    
+    # polar orbit:
+    # nb.orbitPolar(b, 5, dustidx, ex, ez, barycenter=True, sun=False)
+
+    # sun-sync orbit: 
+    nb.orbitSunSync(b, dustidx, ez)
+    
 
     # --- all done set up! --- prelim check: orb els of earth...
     a,e,i = nb.orbels(b[1],b[0])
@@ -225,9 +186,9 @@ if __name__ == '__main__':
     
     
     # --- done!!! --- #
-    t_eval = tstart + np.linspace(0, 0.5*year, 500)
+    t_eval = tstart + np.linspace(0, year, 500)
     
-    res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-13, t_eval=t_eval)
+    res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-6, t_eval=t_eval)
     
     xs = res.y[0,:]
     ys = res.y[1,:]
@@ -241,7 +202,6 @@ if __name__ == '__main__':
     xp = res.y[9,:]
     yp = res.y[10,:]
     zp = res.y[11,:]
-    
     
     esun = np.column_stack([xs-xe, ys-ye, zs-ze])
     esun_unit = esun / np.linalg.norm(esun, axis=1)[:, None]
@@ -263,27 +223,12 @@ if __name__ == '__main__':
         xp_rot[i] = rotated_pos[0]
         yp_rot[i] = rotated_pos[1]
         zp_rot[i] = rotated_pos[2]
-        
+    
     pl.figure()
     pl.clf()
     pl.plot(xp_rot, yp_rot, ':', color='pink', linewidth=2)
-
-    # Earth and Sun direction
-    earth_circle = plt.Circle((0, 0), 1.0, color='blue', alpha=0.3)
-    pl.gca().add_patch(earth_circle)
-    pl.arrow(0, 0, 2, 0, head_width=0.1, head_length=0.1, fc='yellow', ec='yellow')
-
-    pl.gca().set_aspect('equal')
-    pl.xlabel('x [Earth radii] (Sun direction)')
-    pl.ylabel('y [Earth radii]')
     pl.savefig('corotating.png', dpi=300)
     pl.close()
-    
-    print(f'Final dust position: {xp[-1]:.10e} {yp[-1]:.10e} {zp[-1]:.10e}')
-    print(f'Final earth position: {xe[-1]:.10e} {ye[-1]:.10e} {ze[-1]:.10e}')
-    
-    exit()
-    
     
     # Plot below to see sun, earth, moon system
     pl.figure()
@@ -303,6 +248,10 @@ if __name__ == '__main__':
     pl.plot(xp-xe,yp-ye,'.m', color='pink')
     pl.savefig('reltoearth.png', dpi=300)
     pl.close()
+    
+    
+    print(f'Final dust position: {xp[-1]:.10e} {yp[-1]:.10e} {zp[-1]:.10e}')
+    print(f'Final earth position: {xe[-1]:.10e} {ye[-1]:.10e} {ze[-1]:.10e}')
     
     
     '''
