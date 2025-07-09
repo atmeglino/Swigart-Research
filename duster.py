@@ -102,7 +102,7 @@ def shade(dust,planet,star):
     # check this!
     # theta = ang. of planet relative to radiation flow. theta=0 means we're shading!
     # beta = ang size of the planet. if theta < beta, we are shading some part of planet
-    exit('check this! in shade')
+    # exit('check this! in shade')
     return costheta > cosbeta
 
 def frame_out_check(i,nf,nt):

@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import pylab as pl
 import nbody as nb
 from constants import *
+import duster as d
 from scipy.integrate import solve_ivp
 import matplotlib as mpl
 from matplotlib.collections import LineCollection
@@ -258,6 +259,24 @@ if __name__ == '__main__':
     for xi, yi, zi in zip(xp[::10], yp[::10], zp[::10]):
         print(f"{xi:.6e} {yi:.6e} {zi:.6e}")
     '''
+    
+    # rough draft of scattering code:
+    
+    if d.illuminated(b[dustidx], b[1], b[0]):
+        E_recv = (Lsun * np.pi * b[dustidx:].r**2) / (4 * np.pi * nb.reldist(b[0], b[dustidx])**2)
+        E_deliv = E_recv * d.skyfraction(Rearth, nb.reldist(b[dustidx], b[1]))
+        # is the order in which I write the arguments in the reldist function going to cause a sign error?
+    else:
+        E_recv = 0
+        E_deliv = 0
+    
+    if d.shade(b[dustidx], b[1], b[0]):
+        E_removed = E_recv
+    else:
+        E_removed = 0
+    
+    E_change = E_deliv - E_removed # net change of sunlight on earth
+    
     
     exit()
     
