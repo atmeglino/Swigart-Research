@@ -14,7 +14,7 @@ from constants import *
 from myparms import *
 import argparse
 import sys
-from nbody import *
+import nbody as nb
 import scatter as sc
 
 deg = np.pi/180 # deg in rad so 1*deg is a degre in radians
@@ -68,7 +68,7 @@ def illumfraction(dust,planet,star):
     eplanet = unitvec(posrel(planet,dust))
     costheta = np.dot(erad,eplanet)
     theta = np.arccos(costheta) # zero => no deflection
-    distplanet = pairsep(planet,dust)
+    distplanet = nb.pairsep(planet,dust)
     skyfrac = skyfraction(planet.r,distplanet)
     planetang = skyradius(planet.r,distplanet) # radial size of planet in dust's sky
     starang = np.pi-theta
@@ -80,14 +80,15 @@ def illuminated(dust,planet,star):
     estar = unitvec(posrel(star,dust))
     eplanet = unitvec(posrel(planet,dust))
     starang = np.arccos(np.dot(estar,eplanet))
-    planetang = skyradius(planet.r,pairsep(planet,dust)) # radial size of planet in dust's sky
-    return starang > planetang
+    planetang = skyradius(planet.r,nb.pairsep(planet,dust)) # radial size of planet in dust's sky
+    # return starang > planetang
+    return starang, planetang
 
 def scatters_to_planet(ray,dust,planet):
     # if ray from dust hits planet returns 1 else 0
     eplanet = unitvec(posrel(planet,dust))
     costheta = np.dot(ray,eplanet)
-    distplanet = pairsep(planet,dust)
+    distplanet = nb.pairsep(planet,dust)
     cosprad = np.cos(skyradius(planet.r,distplanet)) # cos of radial size of planet in dust's sky
     return costheta > cosprad
 
@@ -96,7 +97,7 @@ def shade(dust,planet,star):
     erad = -unitvec(posrel(star,dust))
     eplanet = unitvec(posrel(planet,dust))
     costheta = np.dot(erad,eplanet)
-    distplanet = pairsep(planet,dust)
+    distplanet = nb.pairsep(planet,dust)
     cosbeta = np.cos(skyradius(planet.r,distplanet)) # cos of radial size of planet in dust's sky
     # worry about penumbra etc?
     # check this!
@@ -197,7 +198,7 @@ if __name__ == '__main__':
     phobos = dfsolsys.iloc[6]
     deimos = dfsolsys.iloc[7]
 
-    b = np.zeros(nb+ndust,dtype=bodyt).view(np.recarray)
+    b = np.zeros(nb+ndust,dtype=nb.bodyt).view(np.recarray)
     b[0] = (sun.m,sun.r,sun.x,sun.y,sun.z,sun.vx,sun.vy,sun.vz,0,0,0,0,0)
     b[1] = (mars.m,mars.r,mars.x,mars.y,mars.z,mars.vx,mars.vy,mars.vz,0,0,0,0,0)
     star,planet = b[0],b[1]
@@ -257,7 +258,7 @@ if __name__ == '__main__':
         else:
             qext,qsca,qabs,g = 0,0,0,0 # opaque
 
-    acc(b)
+    nb.acc(b) # change this to nb.accTotal?
     print(np.array([b.ax,b.ay,b.az]).T)
     quit()
             
@@ -289,7 +290,7 @@ if __name__ == '__main__':
     #b[ti:].vz += np.random.normal(0,0.1*km,b.shape[0]-nb)
 
     # dust dist, speed in Martian frame
-    r = pairsep(dust[0],planet)
+    r = nb.pairsep(dust[0],planet)
     v = relspeed(dust[0],planet)
     a,_,_ = orbels(dust[0],planet)
     P = 2*np.pi*np.sqrt(a**3/GNewt/planet.m)
@@ -313,13 +314,13 @@ if __name__ == '__main__':
             
     xlis,y1lis,y2lis = [],[],[]
     bsave = b.copy()
-    L = 2.2*pairsep(bsave[-1],bsave[1])/planet.r
+    L = 2.2*nb.pairsep(bsave[-1],bsave[1])/planet.r
     interp=True
     if 'movie' in plotmode:
         frame_start(L)
     tnow = 0.0
     for i in range(nsteps):
-        steps(b,tnow,tsub,ntsub,acc)
+        nb.steps(b,tnow,tsub,ntsub,nb.acc)
         tnow = tsub*(i+1)
         ad,ed,id = orbels(dust[0],planet,ez=ezplanet)
         ap,ep,ip = orbels(planet,star)
@@ -335,9 +336,9 @@ if __name__ == '__main__':
         elif plotmode == 'orbit':
             rrel,vrel = posvelrel(dust,planet)
             pl.plot(rrel[0]/planet.r,rrel[1]/planet.r,'.k')
-            print(i,tnow/year,'rrel/R_Planet:',pairsep(dust,planet)/planet.r)
+            print(i,tnow/year,'rrel/R_Planet:',nb.pairsep(dust,planet)/planet.r)
         else:
-            rsep = pairsep(dust,planet)
+            rsep = nb.pairsep(dust,planet)
             ang,illfrac,islit = illumfraction(dust,planet,star)
             illfrac *= islit
             fac = pf(ang,gpf,nupf) # Draine 2003; nu=0 (HG)->1 (Rayleigh)

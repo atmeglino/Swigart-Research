@@ -80,8 +80,8 @@ if __name__ == '__main__':
     
     a = [b[0].x,b[0].y,b[0].z,b[1].x,b[1].y,b[1].z,b[0].vx,b[0].vy,b[0].vz,b[1].vx,b[1].vy,b[1].vz]
     #print(a);
-    [print(f'{x:1.13e},',end=' ') for x in a]
-    print(' ' )
+    # [print(f'{x:1.13e},',end=' ') for x in a]
+    # print(' ' )
     
     '''
     Old stuff:
@@ -147,21 +147,21 @@ if __name__ == '__main__':
         ex,ey,ez = nb.bodyframe(tstart,teqxjd*day,bfeq,pspin)
 
     # equitorial orbit:
-    # nb.orbitEquatorial(b, 5, dustidx, ndust, ex, ey)
+    # nb.orbitEquatorial(b, 4, dustidx, ndust, ex, ey)
     
     # polar orbit:
-    # nb.orbitPolar(b, 5, dustidx, ex, ez, barycenter=True, sun=False)
+    nb.orbitPolar(b, 4, dustidx, ex, ez)
 
     # sun-sync orbit: 
-    nb.orbitSunSync(b, dustidx, ez)
+    # nb.orbitSunSync(b, dustidx, ez)
     
 
     # --- all done set up! --- prelim check: orb els of earth...
     a,e,i = nb.orbels(b[1],b[0])
-    print('earth orb els:',a/AU,'AU;',e,i*180/np.pi,'deg')
+    # print('earth orb els:',a/AU,'AU;',e,i*180/np.pi,'deg')
 
     a,e,i = nb.orbels(b[2],b[1],ez=bfeq[2])
-    print('moon orb els:',a/Rearth,'AU;',e,i*180/np.pi,'deg')
+    # print('moon orb els:',a/Rearth,'AU;',e,i*180/np.pi,'deg')
 
     '''
     # get ready to integrate, define num of timesteps, substeps .....
@@ -260,22 +260,40 @@ if __name__ == '__main__':
         print(f"{xi:.6e} {yi:.6e} {zi:.6e}")
     '''
     
-    # rough draft of scattering code:
+    # first draft of scattering code:
     
-    if d.illuminated(b[dustidx], b[1], b[0]):
-        E_recv = (Lsun * np.pi * b[dustidx:].r**2) / (4 * np.pi * nb.reldist(b[0], b[dustidx])**2)
-        E_deliv = E_recv * d.skyfraction(Rearth, nb.reldist(b[dustidx], b[1]))
-        # is the order in which I write the arguments in the reldist function going to cause a sign error?
-    else:
-        E_recv = 0
-        E_deliv = 0
-    
-    if d.shade(b[dustidx], b[1], b[0]):
-        E_removed = E_recv
-    else:
-        E_removed = 0
-    
-    E_change = E_deliv - E_removed # net change of sunlight on earth
+    for i in range(0, len(xp), 10):
+        # Update b[dustidx] position if needed, or use trajectory arrays directly
+        # Example assumes you have arrays xp, yp, zp for dust and xe, ye, ze for Earth, etc.
+        b[dustidx].x = xp[i]
+        b[dustidx].y = yp[i]
+        b[dustidx].z = zp[i]
+        b[1].x = xe[i]
+        b[1].y = ye[i]
+        b[1].z = ze[i]
+        b[0].x = xs[i]
+        b[0].y = ys[i]
+        b[0].z = zs[i]
+
+        if d.illuminated(b[dustidx], b[1], b[0]):
+            E_recv = (Lsun * np.pi * b[dustidx].r**2) / (4 * np.pi * nb.reldist(b[0], b[dustidx])**2)
+            E_deliv = E_recv * d.skyfraction(Rearth, nb.reldist(b[dustidx], b[1]))
+        else:
+            E_recv = 0
+            E_deliv = 0
+
+        if d.shade(b[dustidx], b[1], b[0]):
+            E_removed = E_recv
+        else:
+            E_removed = 0
+
+        E_change = E_deliv - E_removed
+
+        print(f"Step {i}:")
+        print(f"  Energy received: {E_recv}")
+        print(f"  Energy delivered: {E_deliv}")
+        print(f"  Energy removed: {E_removed}")
+        print(f"  Net change in energy: {E_change}")
     
     
     exit()
