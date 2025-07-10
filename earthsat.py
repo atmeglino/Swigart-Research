@@ -263,8 +263,6 @@ if __name__ == '__main__':
     # first draft of scattering code:
     
     for i in range(0, len(xp), 10):
-        # Update b[dustidx] position if needed, or use trajectory arrays directly
-        # Example assumes you have arrays xp, yp, zp for dust and xe, ye, ze for Earth, etc.
         b[dustidx].x = xp[i]
         b[dustidx].y = yp[i]
         b[dustidx].z = zp[i]
