@@ -81,8 +81,7 @@ def illuminated(dust,planet,star):
     eplanet = unitvec(posrel(planet,dust))
     starang = np.arccos(np.dot(estar,eplanet))
     planetang = skyradius(planet.r,nb.pairsep(planet,dust)) # radial size of planet in dust's sky
-    # return starang > planetang
-    return starang, planetang
+    return starang > planetang
 
 def scatters_to_planet(ray,dust,planet):
     # if ray from dust hits planet returns 1 else 0

@@ -260,7 +260,7 @@ if __name__ == '__main__':
         print(f"{xi:.6e} {yi:.6e} {zi:.6e}")
     '''
     
-    # first draft of scattering code:
+    # isotropic scattering:
     
     for i in range(0, len(xp), 10):
         b[dustidx].x = xp[i]
