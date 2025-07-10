@@ -69,7 +69,7 @@ if __name__ == '__main__':
     earth = dfsolsys.iloc[3]
     moon = dfsolsys.iloc[4]
     # ugh, best to look at the csv file...sorry
-    ndust = 1
+    ndust = 5
 
     # set up planet info in an array "b" w/elemets of type bodyt
     # bodyt definesmembers m,r,x,y,z,vx,vy,vz and more! *** units are cgs!!!!! ***
@@ -141,16 +141,16 @@ if __name__ == '__main__':
         dustidx = nbodies # tracer in
         rho,rphys = 2.0,10.0*micron
         b[dustidx:].r = rphys
-        # b[dustidx:].q = 1e-12 # Coulombs
-        b[dustidx:].q = 0
+        b[dustidx:].q = 1e-12 # Coulombs
+        # b[dustidx:].q = 0
         b[dustidx:].m = 4*np.pi/3*rho*b[dustidx:].r**3
         ex,ey,ez = nb.bodyframe(tstart,teqxjd*day,bfeq,pspin)
 
     # equitorial orbit:
-    # nb.orbitEquatorial(b, 4, dustidx, ndust, ex, ey)
+    nb.orbitEquatorial(b, 4, dustidx, ndust, ex, ey)
     
     # polar orbit:
-    nb.orbitPolar(b, 4, dustidx, ex, ez)
+    # nb.orbitPolar(b, 4, dustidx, ex, ez)
 
     # sun-sync orbit: 
     # nb.orbitSunSync(b, dustidx, ez)
@@ -187,7 +187,7 @@ if __name__ == '__main__':
     
     
     # --- done!!! --- #
-    t_eval = tstart + np.linspace(0, year, 500)
+    t_eval = tstart + np.linspace(0, year/3, 500)
     
     res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-6, t_eval=t_eval)
     
@@ -200,9 +200,19 @@ if __name__ == '__main__':
     xm = res.y[6,:]
     ym = res.y[7,:]
     zm = res.y[8,:]
-    xp = res.y[9,:]
-    yp = res.y[10,:]
-    zp = res.y[11,:]
+    
+    dust_pos = []
+    for j in range(ndust):
+        base_idx = 9 + 3*j
+        xp = res.y[base_idx, :]
+        yp = res.y[base_idx + 1, :]
+        zp = res.y[base_idx + 2, :]
+        dust_pos.append((xp, yp, zp))
+        
+    print(dust_pos)
+
+    
+    exit()
     
     esun = np.column_stack([xs-xe, ys-ye, zs-ze])
     esun_unit = esun / np.linalg.norm(esun, axis=1)[:, None]
