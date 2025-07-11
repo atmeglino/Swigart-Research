@@ -147,7 +147,7 @@ if __name__ == '__main__':
         ex,ey,ez = nb.bodyframe(tstart,teqxjd*day,bfeq,pspin)
 
     # equitorial orbit:
-    nb.orbitEquatorial(b, 4, dustidx, ndust, ex, ey)
+    nb.orbitEquatorial(b, 1.25, dustidx, ndust, ex, ey)
     
     # polar orbit:
     # nb.orbitPolar(b, 4, dustidx, ex, ez)
@@ -187,7 +187,7 @@ if __name__ == '__main__':
     
     
     # --- done!!! --- #
-    t_eval = tstart + np.linspace(0, year/3, 500)
+    t_eval = tstart + np.linspace(0, year, 500)
     
     res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-6, t_eval=t_eval)
     
@@ -200,7 +200,11 @@ if __name__ == '__main__':
     xm = res.y[6,:]
     ym = res.y[7,:]
     zm = res.y[8,:]
+    xp = res.y[9,:]
+    yp = res.y[10,:]
+    zp = res.y[11,:]
     
+    '''
     dust_pos = []
     for j in range(ndust):
         base_idx = 9 + 3*j
@@ -213,6 +217,7 @@ if __name__ == '__main__':
 
     
     exit()
+    '''
     
     esun = np.column_stack([xs-xe, ys-ye, zs-ze])
     esun_unit = esun / np.linalg.norm(esun, axis=1)[:, None]
