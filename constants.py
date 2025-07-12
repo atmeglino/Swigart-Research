@@ -8,6 +8,7 @@ kg = 1e3
 meter = 1e2
 hour = 3600.0
 day = 24*hour
+week = 7*day
 yr = 365.25*day 
 year = yr
 

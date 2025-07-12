@@ -150,7 +150,7 @@ if __name__ == '__main__':
     nb.orbitEquatorial(b, 1.25, dustidx, ndust, ex, ey)
     
     # polar orbit:
-    # nb.orbitPolar(b, 4, dustidx, ex, ez)
+    # nb.orbitPolar(b, 1.25, dustidx, ex, ez)
 
     # sun-sync orbit: 
     # nb.orbitSunSync(b, dustidx, ez)
@@ -187,22 +187,57 @@ if __name__ == '__main__':
     
     
     # --- done!!! --- #
-    t_eval = tstart + np.linspace(0, year/3, 500)
-    
-    res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-6, t_eval=t_eval)
-    
-    xs = res.y[0,:]
-    ys = res.y[1,:]
-    zs = res.y[2,:]
-    xe = res.y[3,:]
-    ye = res.y[4,:]
-    ze = res.y[5,:]
-    xm = res.y[6,:]
-    ym = res.y[7,:]
-    zm = res.y[8,:]
-    xp = res.y[9,:]
-    yp = res.y[10,:]
-    zp = res.y[11,:]
+    currentState = nb.initialState(b)
+    for i in range(2):
+        t_start_chunk = tstart + i * week
+        t_end_chunk = tstart + (i + 1) * week
+        
+        t_eval = tstart + np.linspace(t_start_chunk, t_end_chunk, 300)
+        
+        res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), currentState, args=(b,), rtol=1e-6, t_eval=t_eval)
+        
+        xs = res.y[0,:]
+        ys = res.y[1,:]
+        zs = res.y[2,:]
+        xe = res.y[3,:]
+        ye = res.y[4,:]
+        ze = res.y[5,:]
+        xm = res.y[6,:]
+        ym = res.y[7,:]
+        zm = res.y[8,:]
+        xp = res.y[9,:]
+        yp = res.y[10,:]
+        zp = res.y[11,:]
+        
+        b[0].x = xs[-1]
+        b[0].y = ys[-1]
+        b[0].z = zs[-1]
+        b[0].vx = res.y[12,-1]
+        b[0].vy = res.y[13,-1]
+        b[0].vz = res.y[14,-1]
+        
+        b[1].x = xe[-1]
+        b[1].y = ye[-1]
+        b[1].z = ze[-1]
+        b[1].vx = res.y[15,-1]
+        b[1].vy = res.y[16,-1]
+        b[1].vz = res.y[17,-1]
+        
+        b[2].x = xm[-1]
+        b[2].y = ym[-1]
+        b[2].z = zm[-1]
+        b[2].vx = res.y[18,-1]
+        b[2].vy = res.y[19,-1]
+        b[2].vz = res.y[20,-1]
+        
+        b[dustidx].x = xp[-1]
+        b[dustidx].y = yp[-1]
+        b[dustidx].z = zp[-1]
+        b[dustidx].vx = res.y[21,-1]
+        b[dustidx].vy = res.y[22,-1]
+        b[dustidx].vz = res.y[23,-1]
+        
+        currentState = nb.initialState(b)
     
     '''
     dust_pos = []
