@@ -52,6 +52,8 @@ def test_local_frame(tnewjd,latdeg,londeg,tnew,b,tnbody,tref,bfref,pspin):
         
 # ---- Main ----- #
 if __name__ == '__main__':
+    
+    total_time_start = time.time()
 
     verbose = True
     plotmode = 'xy'
@@ -188,7 +190,10 @@ if __name__ == '__main__':
     
     # --- done!!! --- #
     currentState = nb.initialState(b)
-    for i in range(2):
+    
+    t_start = time.time()
+    
+    for i in range(53):
         t_start_chunk = tstart + i * week
         t_end_chunk = tstart + (i + 1) * week
         
@@ -238,6 +243,15 @@ if __name__ == '__main__':
         b[dustidx].vz = res.y[23,-1]
         
         currentState = nb.initialState(b)
+        
+    t_end = time.time()
+    
+    elapsed_time = t_end - t_start
+    
+    print(f"Integration completed in {elapsed_time:.2f} seconds")
+    print(f"That's {elapsed_time/60:.2f} minutes")
+    print(f"Or {elapsed_time/3600:.2f} hours")
+
     
     '''
     dust_pos = []
@@ -342,6 +356,14 @@ if __name__ == '__main__':
         print(f"  Energy delivered: {E_deliv}")
         print(f"  Energy removed: {E_removed}")
         print(f"  Net change in energy: {E_change}")
+        
+    total_time_end = time.time()
+    
+    total_elapsed_time = total_time_end - total_time_start
+    
+    print(f"Total elapsed time: {total_elapsed_time:.2f} seconds")
+    print(f"That's {total_elapsed_time/60:.2f} minutes")
+    print(f"Or {total_elapsed_time/3600:.2f} hours")
     
     
     exit()
