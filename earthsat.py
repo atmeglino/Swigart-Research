@@ -52,8 +52,6 @@ def test_local_frame(tnewjd,latdeg,londeg,tnew,b,tnbody,tref,bfref,pspin):
         
 # ---- Main ----- #
 if __name__ == '__main__':
-    
-    total_time_start = time.time()
 
     verbose = True
     plotmode = 'xy'
@@ -143,19 +141,20 @@ if __name__ == '__main__':
         dustidx = nbodies # tracer in
         rho,rphys = 2.0,10.0*micron
         b[dustidx:].r = rphys
-        # b[dustidx:].q = 1e-12 # Coulombs
-        b[dustidx:].q = 0
+        b[dustidx:].q = 1e-12 # Coulombs
+        # b[dustidx:].q = 0
+        b[dustidx:].Q = 0.5
         b[dustidx:].m = 4*np.pi/3*rho*b[dustidx:].r**3
         ex,ey,ez = nb.bodyframe(tstart,teqxjd*day,bfeq,pspin)
 
     # equitorial orbit:
-    nb.orbitEquatorial(b, 1.25, dustidx, ndust, ex, ey)
+    # nb.orbitEquatorial(b, 1.25, dustidx, ndust, ex, ey)
     
     # polar orbit:
     # nb.orbitPolar(b, 1.25, dustidx, ex, ez)
 
     # sun-sync orbit: 
-    # nb.orbitSunSync(b, dustidx, ez)
+    nb.orbitSunSync(b, dustidx, ez)
     
 
     # --- all done set up! --- prelim check: orb els of earth...
@@ -189,6 +188,24 @@ if __name__ == '__main__':
     
     
     # --- done!!! --- #
+    t_eval = tstart + np.linspace(0, year/3, 500)
+    
+    res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-13, t_eval=t_eval)
+    
+    xs = res.y[0,:]
+    ys = res.y[1,:]
+    zs = res.y[2,:]
+    xe = res.y[3,:]
+    ye = res.y[4,:]
+    ze = res.y[5,:]
+    xm = res.y[6,:]
+    ym = res.y[7,:]
+    zm = res.y[8,:]
+    xp = res.y[9,:]
+    yp = res.y[10,:]
+    zp = res.y[11,:]
+    
+    '''
     currentState = nb.initialState(b)
     
     t_start = time.time()
@@ -251,6 +268,7 @@ if __name__ == '__main__':
     print(f"Integration completed in {elapsed_time:.2f} seconds")
     print(f"That's {elapsed_time/60:.2f} minutes")
     print(f"Or {elapsed_time/3600:.2f} hours")
+    '''
 
     
     '''
@@ -356,14 +374,6 @@ if __name__ == '__main__':
         print(f"  Energy delivered: {E_deliv}")
         print(f"  Energy removed: {E_removed}")
         print(f"  Net change in energy: {E_change}")
-        
-    total_time_end = time.time()
-    
-    total_elapsed_time = total_time_end - total_time_start
-    
-    print(f"Total elapsed time: {total_elapsed_time:.2f} seconds")
-    print(f"That's {total_elapsed_time/60:.2f} minutes")
-    print(f"Or {total_elapsed_time/3600:.2f} hours")
     
     
     exit()
