@@ -188,9 +188,9 @@ if __name__ == '__main__':
     
     
     # --- done!!! --- #
-    t_eval = tstart + np.linspace(0, year, 500)
+    t_eval = tstart + np.linspace(0, day, 500)
     
-    res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-6, atol=1e6, t_eval=t_eval)
+    res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-7, t_eval=t_eval)
     
     xs = res.y[0,:]
     ys = res.y[1,:]
@@ -368,12 +368,20 @@ if __name__ == '__main__':
             E_removed = 0
 
         E_change = E_deliv - E_removed
+        
+        Earth_Sun_dist = nb.reldist(b[1],b[0])
+        Earth_dust_dist = nb.reldist(b[1],b[dustidx])
+        dust_Sun_dist = nb.reldist(b[dustidx],b[0])
 
         print(f"Step {i}:")
         print(f"  Energy received: {E_recv}")
         print(f"  Energy delivered: {E_deliv}")
         print(f"  Energy removed: {E_removed}")
         print(f"  Net change in energy: {E_change}")
+        print(f"  Earth-Sun dist: {Earth_Sun_dist}")
+        print(f"  Earth-dust dist: {Earth_dust_dist}")
+        print(f"  Dust-Sun dist: {dust_Sun_dist}")
+        print(f"  Dust radius: {b[dustidx].r}")
     
     
     exit()
