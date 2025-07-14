@@ -143,18 +143,18 @@ if __name__ == '__main__':
         b[dustidx:].r = rphys
         b[dustidx:].q = 1e-12 # Coulombs
         # b[dustidx:].q = 0
-        b[dustidx:].Q = 0.5
+        # b[dustidx:].Q = 0.5
         b[dustidx:].m = 4*np.pi/3*rho*b[dustidx:].r**3
         ex,ey,ez = nb.bodyframe(tstart,teqxjd*day,bfeq,pspin)
 
     # equitorial orbit:
-    # nb.orbitEquatorial(b, 1.25, dustidx, ndust, ex, ey)
+    nb.orbitEquatorial(b, 1.25, dustidx, ndust, ex, ey)
     
     # polar orbit:
     # nb.orbitPolar(b, 1.25, dustidx, ex, ez)
 
     # sun-sync orbit: 
-    nb.orbitSunSync(b, dustidx, ez)
+    # nb.orbitSunSync(b, dustidx, ez)
     
 
     # --- all done set up! --- prelim check: orb els of earth...
@@ -188,9 +188,9 @@ if __name__ == '__main__':
     
     
     # --- done!!! --- #
-    t_eval = tstart + np.linspace(0, year/3, 500)
+    t_eval = tstart + np.linspace(0, year, 500)
     
-    res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-13, t_eval=t_eval)
+    res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-6, atol=1e6, t_eval=t_eval)
     
     xs = res.y[0,:]
     ys = res.y[1,:]
