@@ -308,7 +308,7 @@ def orbitEquatorial(b, distance, dustidx, ndust, ex, ey):
     b[dustidx:].vy += vel[...,1]
     b[dustidx:].vz += vel[...,2]
     
-def orbitPolar(b, distance, dustidx, ex, ez, barycenter=False, sun=True):
+def orbitPolar(b, distance, dustidx, ex, ey, ez, barycenter=False, sun=True):
     planet = b[1]
     b[dustidx:].x, b[dustidx:].y, b[dustidx:].z  = planet.x, planet.y, planet.z
     b[dustidx:].vx,b[dustidx:].vy,b[dustidx:].vz = planet.vx,planet.vy,planet.vz
@@ -316,12 +316,7 @@ def orbitPolar(b, distance, dustidx, ex, ez, barycenter=False, sun=True):
     v = np.sqrt(GNewt*planet.m/r)
     phi = np.pi/2 # for polar orbit starting above north pole
     pos = r*np.cos(phi)*ex + r*np.sin(phi)*ez
-    if sun:
-        earth_vel = np.array([planet.vx - b[0].vx, planet.vy - b[0].vy, planet.vz - b[0].vz]) # for vel in same dir as earth w/ respect to sun
-    if barycenter:
-        earth_vel = np.array([planet.vx, planet.vy, planet.vz]) # for vel in same dir as earth w/ respect to barycenter
-    earth_vel_direction = earth_vel / np.linalg.norm(earth_vel)
-    vel = v * earth_vel_direction
+    vel = v * ey # perpendicular to starting position, pos
     
     b[dustidx:].x += pos[...,0]
     b[dustidx:].y += pos[...,1]
@@ -329,6 +324,49 @@ def orbitPolar(b, distance, dustidx, ex, ez, barycenter=False, sun=True):
     b[dustidx:].vx += vel[...,0]
     b[dustidx:].vy += vel[...,1]
     b[dustidx:].vz += vel[...,2]
+
+def orbitPolarMaxShading(b, distance, dustidx, ez):
+    """
+    Polar orbit that maximizes Earth shadowing by aligning 
+    orbital plane with Sun-Earth line.
+    """
+    planet = b[1]
+    sun = b[0]
+    
+    b[dustidx:].x, b[dustidx:].y, b[dustidx:].z = planet.x, planet.y, planet.z
+    b[dustidx:].vx, b[dustidx:].vy, b[dustidx:].vz = planet.vx, planet.vy, planet.vz
+    
+    r = distance * planet.r
+    v = np.sqrt(GNewt * planet.m / r)
+    
+    # For maximum shadowing, we want the orbital plane to contain 
+    # the Sun-Earth line. This means:
+    # 1. One axis of the orbit should be along the Sun-Earth direction
+    # 2. The other axis should be perpendicular to both Sun-Earth line and some reference
+    
+    # Sun-Earth direction (from Earth to Sun)
+    sun_direction = unitvec(posrel(sun, planet))
+    
+    # Orbit in the plane containing Sun-Earth line and Earth's spin axis
+    orbital_axis1 = sun_direction  # toward Sun
+    orbital_axis2 = unitvec(np.cross(ez, sun_direction))  # perpendicular to both Sun direction and spin axis
+    
+    pos = r * ez  # Start above north pole
+    
+    # Velocity: perpendicular to position, in the plane containing Sun-Earth line
+    # We want the orbit to pass through the Sun-Earth line
+    vel = v * orbital_axis2  # This creates an orbit in the ez-sun_direction plane
+    
+    print(f"Orbital plane normal: {np.cross(ez, orbital_axis2)}")
+    print(f"Sun direction: {sun_direction}")
+    print(f"Orbital axis 2: {orbital_axis2}")
+    
+    b[dustidx:].x += pos[0]
+    b[dustidx:].y += pos[1] 
+    b[dustidx:].z += pos[2]
+    b[dustidx:].vx += vel[0]
+    b[dustidx:].vy += vel[1]
+    b[dustidx:].vz += vel[2]
 
 def orbitSunSync(b, dustidx, ez):
     planet = b[1] # earth
