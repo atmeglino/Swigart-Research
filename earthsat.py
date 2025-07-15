@@ -188,7 +188,7 @@ if __name__ == '__main__':
     
     
     # --- done!!! --- #
-    t_eval = tstart + np.linspace(0, day, 500)
+    t_eval = tstart + np.linspace(0, year, 500)
     
     res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-7, t_eval=t_eval)
     
@@ -378,10 +378,9 @@ if __name__ == '__main__':
         print(f"  Energy delivered: {E_deliv}")
         print(f"  Energy removed: {E_removed}")
         print(f"  Net change in energy: {E_change}")
-        print(f"  Earth-Sun dist: {Earth_Sun_dist}")
-        print(f"  Earth-dust dist: {Earth_dust_dist}")
-        print(f"  Dust-Sun dist: {dust_Sun_dist}")
-        print(f"  Dust radius: {b[dustidx].r}")
+        print(f"  Earth-Sun dist: {Earth_Sun_dist:.8e}")
+        print(f"  Earth-dust dist: {Earth_dust_dist:.8e}")
+        print(f"  Dust-Sun dist: {dust_Sun_dist:.8e}")
     
     
     exit()
