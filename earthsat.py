@@ -429,8 +429,8 @@ if __name__ == '__main__':
             for value in body_values:
                 frame_row.append(value)
     
-    # Add this complete frame to the framedat
-    framedat.append(frame_row)
+        # Add this complete frame to the framedat
+        framedat.append(frame_row)
 
     framedat = np.array(framedat)
     fbin = 'earthsat.bin'
