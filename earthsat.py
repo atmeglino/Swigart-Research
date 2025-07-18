@@ -192,7 +192,7 @@ if __name__ == '__main__':
     
     
     # --- done!!! --- #
-    t_eval = tstart + np.linspace(0, 0.5*year, 500)
+    t_eval = tstart + np.linspace(0, year/4, 500)
     
     res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-7, t_eval=t_eval)
     
@@ -405,6 +405,8 @@ if __name__ == '__main__':
             ])
         framedat.append(frame_data)
     '''
+    
+    # framedat.append([float(n_bodies)])
 
     for i in range(len(res.t)):
         # Start each row with the time
@@ -433,8 +435,19 @@ if __name__ == '__main__':
         framedat.append(frame_row)
 
     framedat = np.array(framedat)
-    fbin = 'earthsat.bin'
-    if fbin: framedat.tofile(fbin)
+    print(framedat)
+    print(framedat.shape)
+    
+    # complete_data = np.concatenate([[float(n_bodies)], framedat.flatten()])
+    complete_data = framedat.flatten()
+    # complete_data: (18500,) = [4.0, time0, body_data..., time1, body_data..., ...]
+    # complete_data: (18500,) = [time0, body_data..., time1, body_data..., ...]
+    print(complete_data)
+    print(complete_data.shape)
+    complete_data.tofile('earthsat.bin')
+    
+    # fbin = 'earthsat.bin'
+    # if fbin: framedat.tofile(fbin)
     
     exit()
     
