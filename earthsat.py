@@ -394,6 +394,7 @@ if __name__ == '__main__':
     
     # The below set of for loops will likely be very time consuming when we add more dust particles
     
+    '''
     for i in range(len(res.t)):
         frame_data = []
         for j in range(n_bodies):
@@ -403,6 +404,33 @@ if __name__ == '__main__':
                 velocities[j, 0, i], velocities[j, 1, i], velocities[j, 2, i], 0
             ])
         framedat.append(frame_data)
+    '''
+
+    for i in range(len(res.t)):
+        # Start each row with the time
+        frame_row = [res.t[i]]
+        
+        # Loop through each body
+        for j in range(n_bodies):
+            # Create the list of values for this body
+            body_values = [
+                b[j].m, 
+                b[j].r,
+                positions[j, 0, i], 
+                positions[j, 1, i], 
+                positions[j, 2, i],
+                velocities[j, 0, i], 
+                velocities[j, 1, i], 
+                velocities[j, 2, i], 
+                0
+            ]
+            
+            # Add each value from this body to the frame row
+            for value in body_values:
+                frame_row.append(value)
+    
+    # Add this complete frame to the framedat
+    framedat.append(frame_row)
 
     framedat = np.array(framedat)
     fbin = 'earthsat.bin'

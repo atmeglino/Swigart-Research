@@ -320,10 +320,6 @@ if __name__ == '__main__':
                 fframelis.append(fout)
                 fctr += 1
                 frame_start(L)
-        elif plotmode == 'orbit':
-            for j in range(2,nbtotal):
-                rrel,vrel = posvelrel(b[j],b[1])
-                pl.plot(rrel[0]/planet.r,rrel[1]/planet.r,'.k')
             #print(i,tnow/year,'rrel/R_Planet:',pairsep(dust,planet)/planet.r)
 
     if 'movie' in plotmode:
