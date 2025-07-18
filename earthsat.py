@@ -147,6 +147,7 @@ if __name__ == '__main__':
         b[dustidx:].m = 4*np.pi/3*rho*b[dustidx:].r**3
         ex,ey,ez = nb.bodyframe(tstart,teqxjd*day,bfeq,pspin)
 
+
     # equitorial orbit:
     # nb.orbitEquatorial(b, 1.25, dustidx, ndust, ex, ey)
     
@@ -386,14 +387,23 @@ if __name__ == '__main__':
         print(f"  Dust-Sun dist: {dust_Sun_dist:.8e}")
     
     
-    exit()
-    
     framedat = []
-    # framedat.append([float(len(b)),tnow]+[q for p in b for q in (p.m,p.r,p.x,p.y,p.z,p.vx,p.vy,p.vz,p.L)])
-    for i in range(len(xs)):
-        # make a list of lists
-        # each list is for each body, with time, r, pos, vel, L (set L=0 for everyone)
-        framedat = np.append(framedat, [[res.t[i]] + [p.m, p.r, p.x[i], p.y[i], p.z[i], p.vx[i], p.vy[i], p.vz[i], 0] for p in b])
+    n_bodies = len(b)
+    positions = res.y[:3*n_bodies, :].reshape(n_bodies, 3, -1)
+    velocities = res.y[3*n_bodies:, :].reshape(n_bodies, 3, -1)
+    
+    # The below set of for loops will likely be very time consuming when we add more dust particles
+    
+    for i in range(len(res.t)):
+        frame_data = []
+        for j in range(n_bodies):
+            frame_data.extend([
+                res.t[i], b[j].m, b[j].r,
+                positions[j, 0, i], positions[j, 1, i], positions[j, 2, i],
+                velocities[j, 0, i], velocities[j, 1, i], velocities[j, 2, i], 0
+            ])
+        framedat.append(frame_data)
+
     framedat = np.array(framedat)
     fbin = 'earthsat.bin'
     if fbin: framedat.tofile(fbin)

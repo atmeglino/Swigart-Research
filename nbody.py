@@ -357,10 +357,6 @@ def orbitPolarMaxShading(b, distance, dustidx, ez):
     # We want the orbit to pass through the Sun-Earth line
     vel = v * orbital_axis2  # This creates an orbit in the ez-sun_direction plane
     
-    print(f"Orbital plane normal: {np.cross(ez, orbital_axis2)}")
-    print(f"Sun direction: {sun_direction}")
-    print(f"Orbital axis 2: {orbital_axis2}")
-    
     b[dustidx:].x += pos[0]
     b[dustidx:].y += pos[1] 
     b[dustidx:].z += pos[2]
