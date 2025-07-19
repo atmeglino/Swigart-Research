@@ -155,10 +155,10 @@ if __name__ == '__main__':
     # nb.orbitPolar(b, 1.25, dustidx, ex, ey, ez)
     
     # polar orbit - max shadowing
-    nb.orbitPolarMaxShading(b, 1.25, dustidx, ez)
+    # nb.orbitPolarMaxShading(b, 1.25, dustidx, ez)
 
     # sun-sync orbit: 
-    # nb.orbitSunSync(b, dustidx, ez)
+    nb.orbitSunSync(b, dustidx, ez)
     
 
     # --- all done set up! --- prelim check: orb els of earth...
@@ -373,18 +373,12 @@ if __name__ == '__main__':
 
         E_change = E_deliv - E_removed
         
-        Earth_Sun_dist = nb.reldist(b[1],b[0])
-        Earth_dust_dist = nb.reldist(b[1],b[dustidx])
-        dust_Sun_dist = nb.reldist(b[dustidx],b[0])
 
         print(f"Step {i}:")
         print(f"  Energy received: {E_recv}")
         print(f"  Energy delivered: {E_deliv}")
         print(f"  Energy removed: {E_removed}")
         print(f"  Net change in energy: {E_change}")
-        print(f"  Earth-Sun dist: {Earth_Sun_dist:.8e}")
-        print(f"  Earth-dust dist: {Earth_dust_dist:.8e}")
-        print(f"  Dust-Sun dist: {dust_Sun_dist:.8e}")
     
     
     framedat = []
@@ -410,7 +404,7 @@ if __name__ == '__main__':
 
     for i in range(len(res.t)):
         # Start each row with the time
-        frame_row = [res.t[i]]
+        frame_row = [n_bodies, res.t[i]]
         
         # Loop through each body
         for j in range(n_bodies):
@@ -435,15 +429,8 @@ if __name__ == '__main__':
         framedat.append(frame_row)
 
     framedat = np.array(framedat)
-    print(framedat)
-    print(framedat.shape)
-    
-    # complete_data = np.concatenate([[float(n_bodies)], framedat.flatten()])
     complete_data = framedat.flatten()
-    # complete_data: (18500,) = [4.0, time0, body_data..., time1, body_data..., ...]
-    # complete_data: (18500,) = [time0, body_data..., time1, body_data..., ...]
-    print(complete_data)
-    print(complete_data.shape)
+    # complete_data: [4.0, time0, body_data..., time1, body_data..., ...]
     complete_data.tofile('earthsat.bin')
     
     # fbin = 'earthsat.bin'

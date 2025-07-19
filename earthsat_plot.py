@@ -326,12 +326,12 @@ if __name__ == '__main__':
         print('files: '+' '.join(fframelis))
         os.system('convert '+' '.join(fframelis)+' earthsat.gif')
         os.system('rm '+' '.join(fframelis))
-        os.system('cp earthsat.gif ~/www/tmp.gif')
+        os.system('cp earthsat.gif ~/Swigart-Research/tmp.gif')
     else:
         if len(xlis):
             pl.plot(xlis,y1lis,'-k')
             pl.plot(xlis,y2lis,'-k')
         out = 'earthsat.pdf'
         pl.savefig(out)
-        os.system('convert '+out+' ~/www/tmp.jpg')
+        os.system('convert '+out+' ~/Swigart-Research/tmp.jpg')
     
