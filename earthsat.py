@@ -152,10 +152,10 @@ if __name__ == '__main__':
     # nb.orbitEquatorial(b, 1.25, dustidx, ndust, ex, ey)
     
     # polar orbit:
-    nb.orbitPolar(b, 1.25, dustidx, ex, ey, ez)
+    # nb.orbitPolar(b, 1.25, dustidx, ex, ey, ez)
     
     # polar orbit - max shadowing
-    # nb.orbitPolarMaxShading(b, 1.25, dustidx, ez)
+    nb.orbitPolarMaxShading(b, 1.25, dustidx, ez)
 
     # sun-sync orbit: 
     # nb.orbitSunSync(b, dustidx, ez)
@@ -192,7 +192,7 @@ if __name__ == '__main__':
     
     
     # --- done!!! --- #
-    t_eval = tstart + np.linspace(0.5*year, 0.5*year + 3*hour, 500)
+    t_eval = tstart + np.linspace(0, 2*week, 500)
     
     res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-7, t_eval=t_eval)
     
