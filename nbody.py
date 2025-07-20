@@ -316,7 +316,7 @@ def orbitPolar(b, distance, dustidx, ex, ey, ez, barycenter=False, sun=True):
     v = np.sqrt(GNewt*planet.m/r)
     phi = np.pi/2 # for polar orbit starting above north pole
     pos = r*np.cos(phi)*ex + r*np.sin(phi)*ez
-    vel = v * ey # perpendicular to starting position, pos
+    vel = v * ex # perpendicular to starting position, pos
     
     b[dustidx:].x += pos[...,0]
     b[dustidx:].y += pos[...,1]
