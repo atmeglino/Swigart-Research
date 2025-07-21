@@ -152,10 +152,10 @@ if __name__ == '__main__':
     # nb.orbitEquatorial(b, 1.25, dustidx, ndust, ex, ey)
     
     # polar orbit:
-    nb.orbitPolar(b, 1.25, dustidx, ex, ey, ez)
+    # nb.orbitPolar(b, 1.25, dustidx, ex, ey, ez)
     
     # polar orbit - max shadowing
-    # nb.orbitPolarMaxShading(b, 1.25, dustidx, ez)
+    nb.orbitPolarMaxShading(b, 1.25, dustidx, ez)
 
     # sun-sync orbit: 
     # nb.orbitSunSync(b, dustidx, ez)
@@ -192,7 +192,8 @@ if __name__ == '__main__':
     
     
     # --- done!!! --- #
-    t_eval = tstart + np.linspace(0, 6*hour, 500)
+    '''
+    t_eval = tstart + np.linspace(0, 2.5*hour, 50000)
     
     res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-7, t_eval=t_eval)
     
@@ -208,6 +209,7 @@ if __name__ == '__main__':
     xp = res.y[9,:]
     yp = res.y[10,:]
     zp = res.y[11,:]
+    '''
     
     '''
     currentState = nb.initialState(b)
@@ -289,7 +291,7 @@ if __name__ == '__main__':
     
     exit()
     '''
-    
+    '''
     esun = np.column_stack([xs-xe, ys-ye, zs-ze])
     esun_unit = esun / np.linalg.norm(esun, axis=1)[:, None]
     
@@ -339,6 +341,7 @@ if __name__ == '__main__':
     
     print(f'Final dust position: {xp[-1]:.10e} {yp[-1]:.10e} {zp[-1]:.10e}')
     print(f'Final earth position: {xe[-1]:.10e} {ye[-1]:.10e} {ze[-1]:.10e}')
+    '''
     
     
     '''
@@ -347,7 +350,7 @@ if __name__ == '__main__':
     '''
     
     # isotropic scattering:
-    
+    '''
     for i in range(0, len(xp), 10):
         b[dustidx].x = xp[i]
         b[dustidx].y = yp[i]
@@ -379,6 +382,55 @@ if __name__ == '__main__':
         print(f"  Energy delivered: {E_deliv}")
         print(f"  Energy removed: {E_removed}")
         print(f"  Net change in energy: {E_change}")
+    '''
+    
+    # Simple approach: 10 separate integrations
+    energy_calc_times = np.linspace(0, 1*year, 10)  # 10 points across the year
+    energy_window = 2.5 * hour  # 2.5 hours of data for each period
+
+    for period_idx, start_time in enumerate(energy_calc_times):
+        print(f"\n=== Energy Period {period_idx + 1}/10 ===")
+        print(f"Time: {start_time/day:.1f} days from start")
+        
+        # Short integration for just this 2.5 hour window
+        t_eval = tstart + start_time + np.linspace(0, energy_window, 500)
+        
+        # Update initial state to this time point
+        if period_idx == 0:
+            current_state = nb.initialState(b)
+        else:
+            # Quick integration to get to this time
+            temp_res = solve_ivp(nb.ode, (tstart, tstart + start_time), 
+                            nb.initialState(b), args=(b,), rtol=1e-7)
+            current_state = temp_res.y[:, -1]
+        
+        # Integrate for 2.5 hours
+        res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), current_state, 
+                    args=(b,), rtol=1e-7, t_eval=t_eval)
+        
+        # Extract positions
+        xs, ys, zs = res.y[0,:], res.y[1,:], res.y[2,:]
+        xe, ye, ze = res.y[3,:], res.y[4,:], res.y[5,:]
+        xp, yp, zp = res.y[9,:], res.y[10,:], res.y[11,:]
+        
+        # Calculate energies every 10th point
+        for i in range(0, len(res.t), 10):
+            b[dustidx].x, b[dustidx].y, b[dustidx].z = xp[i], yp[i], zp[i]
+            b[1].x, b[1].y, b[1].z = xe[i], ye[i], ze[i]
+            b[0].x, b[0].y, b[0].z = xs[i], ys[i], zs[i]
+
+            # Your existing energy calculation code
+            if d.illuminated(b[dustidx], b[1], b[0]):
+                E_recv = (Lsun * np.pi * b[dustidx].r**2) / (4 * np.pi * nb.reldist(b[0], b[dustidx])**2)
+                E_deliv = E_recv * d.skyfraction(Rearth, nb.reldist(b[dustidx], b[1]))
+            else:
+                E_recv = E_deliv = 0
+
+            E_removed = E_recv if d.shade(b[dustidx], b[1], b[0]) else 0
+            E_change = E_deliv - E_removed
+            
+            time_hours = (res.t[i] - t_eval[0]) / hour
+            print(f"  t={float(time_hours):.2f}h: E_recv={float(E_recv):.4}, E_deliv={float(E_deliv):.4}, E_removed={float(E_removed):.4}, E_net={float(E_change):.4}")
     
     
     framedat = []
@@ -387,20 +439,6 @@ if __name__ == '__main__':
     velocities = res.y[3*n_bodies:, :].reshape(n_bodies, 3, -1)
     
     # The below set of for loops will likely be very time consuming when we add more dust particles
-    
-    '''
-    for i in range(len(res.t)):
-        frame_data = []
-        for j in range(n_bodies):
-            frame_data.extend([
-                res.t[i], b[j].m, b[j].r,
-                positions[j, 0, i], positions[j, 1, i], positions[j, 2, i],
-                velocities[j, 0, i], velocities[j, 1, i], velocities[j, 2, i], 0
-            ])
-        framedat.append(frame_data)
-    '''
-    
-    # framedat.append([float(n_bodies)])
 
     for i in range(len(res.t)):
         # Start each row with the time

@@ -348,14 +348,14 @@ def orbitPolarMaxShading(b, distance, dustidx, ez):
     sun_direction = unitvec(posrel(sun, planet))
     
     # Orbit in the plane containing Sun-Earth line and Earth's spin axis
-    orbital_axis1 = sun_direction  # toward Sun
-    orbital_axis2 = unitvec(np.cross(ez, sun_direction))  # perpendicular to both Sun direction and spin axis
+    # orbital_axis1 = sun_direction  # toward Sun
+    # orbital_axis2 = unitvec(np.cross(ez, sun_direction))  # perpendicular to both Sun direction and spin axis
     
     pos = r * ez  # Start above north pole
     
     # Velocity: perpendicular to position, in the plane containing Sun-Earth line
     # We want the orbit to pass through the Sun-Earth line
-    vel = v * orbital_axis2  # This creates an orbit in the ez-sun_direction plane
+    vel = v * sun_direction  # This creates an orbit in the ez-sun_direction plane
     
     b[dustidx:].x += pos[0]
     b[dustidx:].y += pos[1] 
