@@ -155,10 +155,10 @@ if __name__ == '__main__':
     # nb.orbitPolar(b, 1.25, dustidx, ex, ey, ez)
     
     # polar orbit - max shadowing
-    nb.orbitPolarMaxShading(b, 1.25, dustidx, ez)
+    # nb.orbitPolarMaxShading(b, 1.25, dustidx, ez)
 
     # sun-sync orbit: 
-    # nb.orbitSunSync(b, dustidx, ez)
+    nb.orbitSunSync(b, dustidx, ez)
     
 
     # --- all done set up! --- prelim check: orb els of earth...
@@ -401,7 +401,7 @@ if __name__ == '__main__':
         else:
             # Quick integration to get to this time
             temp_res = solve_ivp(nb.ode, (tstart, tstart + start_time), 
-                            nb.initialState(b), args=(b,), rtol=1e-7)
+                            current_state, args=(b,), rtol=1e-7)
             current_state = temp_res.y[:, -1]
         
         # Integrate for 2.5 hours
@@ -419,7 +419,6 @@ if __name__ == '__main__':
             b[1].x, b[1].y, b[1].z = xe[i], ye[i], ze[i]
             b[0].x, b[0].y, b[0].z = xs[i], ys[i], zs[i]
 
-            # Your existing energy calculation code
             if d.illuminated(b[dustidx], b[1], b[0]):
                 E_recv = (Lsun * np.pi * b[dustidx].r**2) / (4 * np.pi * nb.reldist(b[0], b[dustidx])**2)
                 E_deliv = E_recv * d.skyfraction(Rearth, nb.reldist(b[dustidx], b[1]))
