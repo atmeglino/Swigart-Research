@@ -143,13 +143,13 @@ if __name__ == '__main__':
         b[dustidx:].r = rphys
         b[dustidx:].q = 1e-12 # Coulombs
         # b[dustidx:].q = 0
-        # b[dustidx:].Q = 0.5
+        b[dustidx:].Q = 0.8
+        # b[dustidx:].eta = 1
         b[dustidx:].m = 4*np.pi/3*rho*b[dustidx:].r**3
         ex,ey,ez = nb.bodyframe(tstart,teqxjd*day,bfeq,pspin)
-
-
+    
     # equitorial orbit:
-    # nb.orbitEquatorial(b, 1.25, dustidx, ndust, ex, ey)
+    nb.orbitEquatorial(b, 1.25, dustidx, ndust, ex, ey)
     
     # polar orbit:
     # nb.orbitPolar(b, 1.25, dustidx, ex, ey, ez)
@@ -158,7 +158,7 @@ if __name__ == '__main__':
     # nb.orbitPolarMaxShading(b, 1.25, dustidx, ez)
 
     # sun-sync orbit: 
-    nb.orbitSunSync(b, dustidx, ez)
+    # nb.orbitSunSync(b, dustidx, ez)
     
 
     # --- all done set up! --- prelim check: orb els of earth...
@@ -167,6 +167,7 @@ if __name__ == '__main__':
 
     a,e,i = nb.orbels(b[2],b[1],ez=bfeq[2])
     # print('moon orb els:',a/Rearth,'AU;',e,i*180/np.pi,'deg')
+    
 
     '''
     # get ready to integrate, define num of timesteps, substeps .....
@@ -384,9 +385,11 @@ if __name__ == '__main__':
         print(f"  Net change in energy: {E_change}")
     '''
     
-    # Simple approach: 10 separate integrations
+    
     energy_calc_times = np.linspace(0, 1*year, 10)  # 10 points across the year
     energy_window = 2.5 * hour  # 2.5 hours of data for each period
+    current_state = nb.initialState(b)
+    last_time = 0
 
     for period_idx, start_time in enumerate(energy_calc_times):
         print(f"\n=== Energy Period {period_idx + 1}/10 ===")
@@ -396,17 +399,20 @@ if __name__ == '__main__':
         t_eval = tstart + start_time + np.linspace(0, energy_window, 500)
         
         # Update initial state to this time point
-        if period_idx == 0:
-            current_state = nb.initialState(b)
-        else:
-            # Quick integration to get to this time
-            temp_res = solve_ivp(nb.ode, (tstart, tstart + start_time), 
-                            current_state, args=(b,), rtol=1e-7)
-            current_state = temp_res.y[:, -1]
+        if period_idx > 0:
+            gap_time = start_time - last_time
+            if gap_time > 0:
+                # Quick integration to get to this time
+                temp_res = solve_ivp(nb.ode, (tstart + last_time, tstart + start_time), 
+                                current_state, args=(b,), rtol=1e-7)
+                current_state = temp_res.y[:, -1]
         
         # Integrate for 2.5 hours
         res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), current_state, 
                     args=(b,), rtol=1e-7, t_eval=t_eval)
+        
+        current_state = res.y[:, -1]
+        last_time = start_time + energy_window
         
         # Extract positions
         xs, ys, zs = res.y[0,:], res.y[1,:], res.y[2,:]
@@ -429,7 +435,7 @@ if __name__ == '__main__':
             E_change = E_deliv - E_removed
             
             time_hours = (res.t[i] - t_eval[0]) / hour
-            print(f"  t={float(time_hours):.2f}h: E_recv={float(E_recv):.4}, E_deliv={float(E_deliv):.4}, E_removed={float(E_removed):.4}, E_net={float(E_change):.4}")
+            print(f"  t={float(time_hours):.2f}h: E_recv={float(E_recv):.4}, E_deliv={float(E_deliv):.4}, E_removed={float(E_removed):.4}, E_net={float(E_change):.4}, Dist={float(np.sqrt((xp[i]-xe[i])**2+(yp[i]-ye[i])**2+(zp[i]-ze[i])**2)):.4}")
     
     
     framedat = []

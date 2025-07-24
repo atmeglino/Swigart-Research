@@ -326,10 +326,6 @@ def orbitPolar(b, distance, dustidx, ex, ey, ez, barycenter=False, sun=True):
     b[dustidx:].vz += vel[...,2]
 
 def orbitPolarMaxShading(b, distance, dustidx, ez):
-    """
-    Polar orbit that maximizes Earth shadowing by aligning 
-    orbital plane with Sun-Earth line.
-    """
     planet = b[1]
     sun = b[0]
     
@@ -339,23 +335,21 @@ def orbitPolarMaxShading(b, distance, dustidx, ez):
     r = distance * planet.r
     v = np.sqrt(GNewt * planet.m / r)
     
-    # For maximum shadowing, we want the orbital plane to contain 
-    # the Sun-Earth line. This means:
-    # 1. One axis of the orbit should be along the Sun-Earth direction
-    # 2. The other axis should be perpendicular to both Sun-Earth line and some reference
+    ex_sys = unitvec(posrel(sun, planet))  # Earth to Sun
+    ez_sys = unitvec(np.cross(posrel(planet, sun), velrel(planet, sun)))  # Orbital plane normal
+    ey_sys = unitvec(np.cross(ez_sys, ex_sys)) # Perpendicular to both
+    
+    # Start above "north pole" of orbital plane
+    pos = r * ez_sys # Start directly above Earth relative to the orbital plane
+    vel = v * ex_sys  # Move perpendicular to pos, toward Sun
     
     # Sun-Earth direction (from Earth to Sun)
-    sun_direction = unitvec(posrel(sun, planet))
+    # sun_direction = unitvec(posrel(sun, planet))
     
-    # Orbit in the plane containing Sun-Earth line and Earth's spin axis
-    # orbital_axis1 = sun_direction  # toward Sun
-    # orbital_axis2 = unitvec(np.cross(ez, sun_direction))  # perpendicular to both Sun direction and spin axis
-    
-    pos = r * ez  # Start above north pole
+    # pos = r * ez  # Start above north pole
     
     # Velocity: perpendicular to position, in the plane containing Sun-Earth line
-    # We want the orbit to pass through the Sun-Earth line
-    vel = v * sun_direction  # This creates an orbit in the ez-sun_direction plane
+    # vel = v * sun_direction  # This creates an orbit in the ez-sun_direction plane
     
     b[dustidx:].x += pos[0]
     b[dustidx:].y += pos[1] 
