@@ -143,13 +143,13 @@ if __name__ == '__main__':
         b[dustidx:].r = rphys
         b[dustidx:].q = 1e-12 # Coulombs
         # b[dustidx:].q = 0
-        b[dustidx:].Q = 0.8
+        b[dustidx:].Q = 2
         # b[dustidx:].eta = 1
         b[dustidx:].m = 4*np.pi/3*rho*b[dustidx:].r**3
         ex,ey,ez = nb.bodyframe(tstart,teqxjd*day,bfeq,pspin)
     
     # equitorial orbit:
-    nb.orbitEquatorial(b, 1.25, dustidx, ndust, ex, ey)
+    # nb.orbitEquatorial(b, 1.25, dustidx, ndust, ex, ey)
     
     # polar orbit:
     # nb.orbitPolar(b, 1.25, dustidx, ex, ey, ez)
@@ -158,7 +158,7 @@ if __name__ == '__main__':
     # nb.orbitPolarMaxShading(b, 1.25, dustidx, ez)
 
     # sun-sync orbit: 
-    # nb.orbitSunSync(b, dustidx, ez)
+    nb.orbitSunSync(b, dustidx, ez)
     
 
     # --- all done set up! --- prelim check: orb els of earth...
