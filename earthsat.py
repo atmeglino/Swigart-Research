@@ -143,7 +143,7 @@ if __name__ == '__main__':
         b[dustidx:].r = rphys
         b[dustidx:].q = 1e-12 # Coulombs
         # b[dustidx:].q = 0
-        b[dustidx:].Q = 2
+        b[dustidx:].Q = 0.8
         # b[dustidx:].eta = 1
         b[dustidx:].m = 4*np.pi/3*rho*b[dustidx:].r**3
         ex,ey,ez = nb.bodyframe(tstart,teqxjd*day,bfeq,pspin)
@@ -167,6 +167,19 @@ if __name__ == '__main__':
 
     a,e,i = nb.orbels(b[2],b[1],ez=bfeq[2])
     # print('moon orb els:',a/Rearth,'AU;',e,i*180/np.pi,'deg')
+    
+    
+    # --- semi-major axis for dust particle ---
+    '''
+    inc = (90 - 13)*np.pi/180
+    dOmdt = 2*np.pi/year
+    ecc = 0
+    
+    a_semi = (1.5*J2tildeEarth*REarth**2*np.sqrt(GNewt*MEarth)*np.cos(inc)/(1-ecc**2)**2/dOmdt)**(2./7.)
+    
+    print(a_semi/REarth)
+    '''
+    
     
 
     '''
@@ -193,8 +206,8 @@ if __name__ == '__main__':
     
     
     # --- done!!! --- #
-    '''
-    t_eval = tstart + np.linspace(0, 2.5*hour, 50000)
+    
+    t_eval = tstart + np.linspace(0, year/4, 500)
     
     res = solve_ivp(nb.ode, (t_eval[0], t_eval[-1]), nb.initialState(b), args=(b,), rtol=1e-7, t_eval=t_eval)
     
@@ -210,12 +223,10 @@ if __name__ == '__main__':
     xp = res.y[9,:]
     yp = res.y[10,:]
     zp = res.y[11,:]
-    '''
+    
     
     '''
     currentState = nb.initialState(b)
-    
-    t_start = time.time()
     
     for i in range(53):
         t_start_chunk = tstart + i * week
@@ -267,16 +278,8 @@ if __name__ == '__main__':
         b[dustidx].vz = res.y[23,-1]
         
         currentState = nb.initialState(b)
-        
-    t_end = time.time()
-    
-    elapsed_time = t_end - t_start
-    
-    print(f"Integration completed in {elapsed_time:.2f} seconds")
-    print(f"That's {elapsed_time/60:.2f} minutes")
-    print(f"Or {elapsed_time/3600:.2f} hours")
     '''
-
+    
     
     '''
     dust_pos = []
@@ -288,11 +291,8 @@ if __name__ == '__main__':
         dust_pos.append((xp, yp, zp))
         
     print(dust_pos)
-
+    '''
     
-    exit()
-    '''
-    '''
     esun = np.column_stack([xs-xe, ys-ye, zs-ze])
     esun_unit = esun / np.linalg.norm(esun, axis=1)[:, None]
     
@@ -339,7 +339,7 @@ if __name__ == '__main__':
     pl.savefig('reltoearth.png', dpi=300)
     pl.close()
     
-    
+    '''
     print(f'Final dust position: {xp[-1]:.10e} {yp[-1]:.10e} {zp[-1]:.10e}')
     print(f'Final earth position: {xe[-1]:.10e} {ye[-1]:.10e} {ze[-1]:.10e}')
     '''
@@ -351,7 +351,7 @@ if __name__ == '__main__':
     '''
     
     # isotropic scattering:
-    '''
+    
     for i in range(0, len(xp), 10):
         b[dustidx].x = xp[i]
         b[dustidx].y = yp[i]
@@ -383,9 +383,9 @@ if __name__ == '__main__':
         print(f"  Energy delivered: {E_deliv}")
         print(f"  Energy removed: {E_removed}")
         print(f"  Net change in energy: {E_change}")
+    
+    
     '''
-    
-    
     energy_calc_times = np.linspace(0, 1*year, 10)  # 10 points across the year
     energy_window = 2.5 * hour  # 2.5 hours of data for each period
     current_state = nb.initialState(b)
@@ -436,7 +436,7 @@ if __name__ == '__main__':
             
             time_hours = (res.t[i] - t_eval[0]) / hour
             print(f"  t={float(time_hours):.2f}h: E_recv={float(E_recv):.4}, E_deliv={float(E_deliv):.4}, E_removed={float(E_removed):.4}, E_net={float(E_change):.4}, Dist={float(np.sqrt((xp[i]-xe[i])**2+(yp[i]-ye[i])**2+(zp[i]-ze[i])**2)):.4}")
-    
+    '''
     
     framedat = []
     n_bodies = len(b)

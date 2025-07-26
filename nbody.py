@@ -360,18 +360,27 @@ def orbitPolarMaxShading(b, distance, dustidx, ez):
 
 def orbitSunSync(b, dustidx, ez):
     planet = b[1] # earth
+    sun = b[0] # sun
     rc = 1.25*planet.r # starting position for sun-sync orbit
+    # rc = 1.2645912137683037*planet.r
     vc = np.sqrt(GNewt*planet.m/rc) # circular velocity
-    esun = unitvec(posrel(b[0],b[1]))  # unit vec form
+    esun = unitvec(posrel(sun,planet))  # unit vec form
     ptilt = 13*degree
     r = Ro.from_quat([np.sin(ptilt/2)*esun[0], np.sin(ptilt/2)*esun[1], np.sin(ptilt/2)*esun[2], np.cos(ptilt/2)]) # creates rotation object
+    
+    ex_sys = unitvec(posrel(sun, planet))  # Earth to Sun
+    ez_sys = unitvec(np.cross(posrel(planet, sun), velrel(planet, sun)))  # Orbital plane normal
+    ey_sys = unitvec(np.cross(ez_sys, ex_sys)) # Perpendicular to both
+    
     epolar = r.apply(ez) # applies rotation to ez vector
     evel = -unitvec(np.cross(np.cross(epolar,esun),epolar))  # cross prods to get vel pointed in good direction
+    
     # do a rotation about esun, 13 degrees. 23 degrees would align earth spim w/z axis
     # epolar = qrotate(epolar,quat(np.cos(ptilt/2),np.sin(ptilt/2)*esun)) # ptilt=0 is a polar orbit. 90 deg is equatorial 
     # rotv = esun*np.sin(ptilt/2)
     # epolar = Ro.from_quat([rotv[0],rotv[1],rotv[2],np.cos(ptilt/2)]) # might need to use -ptilt?
     # evel = -nb.unitvec(np.cross(np.cross(epolar,esun),epolar))  # cross prods to get vel pointed in good direction
+    
     b[dustidx:].x = planet.x + rc * epolar[0]
     b[dustidx:].y = planet.y + rc * epolar[1]
     b[dustidx:].z = planet.z + rc * epolar[2]

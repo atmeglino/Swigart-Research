@@ -320,7 +320,6 @@ if __name__ == '__main__':
                 fframelis.append(fout)
                 fctr += 1
                 frame_start(L)
-            #print(i,tnow/year,'rrel/R_Planet:',pairsep(dust,planet)/planet.r)
 
     if 'movie' in plotmode:
         print('files: '+' '.join(fframelis))
