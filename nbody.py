@@ -365,12 +365,12 @@ def orbitSunSync(b, dustidx, ez):
     # rc = 1.2645912137683037*planet.r
     vc = np.sqrt(GNewt*planet.m/rc) # circular velocity
     esun = unitvec(posrel(sun,planet))  # unit vec form
-    ptilt = 13*degree
+    ptilt = 30*degree
     r = Ro.from_quat([np.sin(ptilt/2)*esun[0], np.sin(ptilt/2)*esun[1], np.sin(ptilt/2)*esun[2], np.cos(ptilt/2)]) # creates rotation object
     
-    ex_sys = unitvec(posrel(sun, planet))  # Earth to Sun
-    ez_sys = unitvec(np.cross(posrel(planet, sun), velrel(planet, sun)))  # Orbital plane normal
-    ey_sys = unitvec(np.cross(ez_sys, ex_sys)) # Perpendicular to both
+    ex_sys = unitvec(posrel(sun, planet))  # earth to sun
+    ez_sys = unitvec(np.cross(posrel(planet, sun), velrel(planet, sun)))  # orbital plane normal
+    ey_sys = unitvec(np.cross(ez_sys, ex_sys)) # perpendicular to both
     
     epolar = r.apply(ez) # applies rotation to ez vector
     evel = -unitvec(np.cross(np.cross(epolar,esun),epolar))  # cross prods to get vel pointed in good direction

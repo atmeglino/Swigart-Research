@@ -139,7 +139,7 @@ if __name__ == '__main__':
     # now set up a tracer particle
     if ndust:
         dustidx = nbodies # tracer in
-        rho,rphys = 2.0,10.0*micron
+        rho,rphys = 2.0,20.0*micron
         b[dustidx:].r = rphys
         b[dustidx:].q = 1e-12 # Coulombs
         # b[dustidx:].q = 0
