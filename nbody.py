@@ -361,11 +361,11 @@ def orbitPolarMaxShading(b, distance, dustidx, ez):
 def orbitSunSync(b, dustidx, ez):
     planet = b[1] # earth
     sun = b[0] # sun
-    rc = 1.25*planet.r # starting position for sun-sync orbit
+    rc = 1.1*planet.r # starting position for sun-sync orbit
     # rc = 1.2645912137683037*planet.r
     vc = np.sqrt(GNewt*planet.m/rc) # circular velocity
     esun = unitvec(posrel(sun,planet))  # unit vec form
-    ptilt = 30*degree
+    ptilt =60*degree
     r = Ro.from_quat([np.sin(ptilt/2)*esun[0], np.sin(ptilt/2)*esun[1], np.sin(ptilt/2)*esun[2], np.cos(ptilt/2)]) # creates rotation object
     
     ex_sys = unitvec(posrel(sun, planet))  # earth to sun
