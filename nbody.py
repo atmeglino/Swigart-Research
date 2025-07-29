@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.spatial.transform import Rotation as Ro
 import earthsat as es
+import duster as d
 
 from constants import *
 
@@ -210,31 +211,36 @@ def accRad(b):
     if not np.any(msk):
         return np.zeros(n_bodies), np.zeros(n_bodies), np.zeros(n_bodies)
     
-    pos = getPosition(b)
-    vel = getVelocity(b)
+    num_rad_particles = np.sum(msk)
+    a = np.zeros((num_rad_particles, 3))
     
-    sun_pos = pos[0]
-    sun_vel = vel[0]
-    
-    rel_pos = pos[msk] - sun_pos
-    rel_vel = vel[msk] - sun_vel
-    
-    r2 = np.sum(rel_pos**2, axis=1)
-    rr = np.sqrt(r2)
-    
-    Ap = np.pi * b.r[msk]**2
-    S = Lsun / (4 * np.pi * r2)
-    etadivQ = b.eta[msk] / b.Q[msk]
-    
-    radial_vel = np.sum(rel_vel * rel_pos, axis=1) / rr
-    
-    radacc_mag = (Ap * S * b.Q[msk] / clight / b.m[msk] * 
-                 (1 + etadivQ * uswind/clight - (1 + etadivQ) * radial_vel/clight))
-    
-    pracc_mag = -Ap * S * b.Q[msk] / clight**2 / b.m[msk] * (1 + etadivQ)
-    
-    radial_unit = rel_pos / rr[:, np.newaxis]
-    a = radacc_mag[:, np.newaxis] * radial_unit + pracc_mag[:, np.newaxis] * rel_vel
+    if d.illuminated(b[3], b[1], b[0]):
+        pos = getPosition(b)
+        vel = getVelocity(b)
+        
+        sun_pos = pos[0]
+        sun_vel = vel[0]
+        
+        rel_pos = pos[msk] - sun_pos
+        rel_vel = vel[msk] - sun_vel
+        
+        r2 = np.sum(rel_pos**2, axis=1)
+        rr = np.sqrt(r2)
+        
+        Ap = np.pi * b.r[msk]**2
+        S = Lsun / (4 * np.pi * r2)
+        etadivQ = b.eta[msk] / b.Q[msk]
+        
+        radial_vel = np.sum(rel_vel * rel_pos, axis=1) / rr
+        
+        radacc_mag = (Ap * S * b.Q[msk] / clight / b.m[msk] * 
+                    (1 + etadivQ * uswind/clight - (1 + etadivQ) * radial_vel/clight))
+        
+        pracc_mag = -Ap * S * b.Q[msk] / clight**2 / b.m[msk] * (1 + etadivQ)
+        
+        radial_unit = rel_pos / rr[:, np.newaxis]
+        a = radacc_mag[:, np.newaxis] * radial_unit + pracc_mag[:, np.newaxis] * rel_vel
+        
     acc_rad[msk] = a
     
     return acc_rad[:, 0], acc_rad[:, 1], acc_rad[:, 2]
@@ -361,11 +367,11 @@ def orbitPolarMaxShading(b, distance, dustidx, ez):
 def orbitSunSync(b, dustidx, ez):
     planet = b[1] # earth
     sun = b[0] # sun
-    rc = 1.1*planet.r # starting position for sun-sync orbit
+    rc = 1.3*planet.r # starting position for sun-sync orbit
     # rc = 1.2645912137683037*planet.r
     vc = np.sqrt(GNewt*planet.m/rc) # circular velocity
     esun = unitvec(posrel(sun,planet))  # unit vec form
-    ptilt =60*degree
+    ptilt =40*degree
     r = Ro.from_quat([np.sin(ptilt/2)*esun[0], np.sin(ptilt/2)*esun[1], np.sin(ptilt/2)*esun[2], np.cos(ptilt/2)]) # creates rotation object
     
     ex_sys = unitvec(posrel(sun, planet))  # earth to sun

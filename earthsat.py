@@ -383,6 +383,7 @@ if __name__ == '__main__':
         print(f"  Energy delivered: {E_deliv}")
         print(f"  Energy removed: {E_removed}")
         print(f"  Net change in energy: {E_change}")
+        print(f"  Rad acc: {nb.accRad(b)}")
     
     
     '''
